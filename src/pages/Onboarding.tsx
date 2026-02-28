@@ -74,7 +74,7 @@ export default function Onboarding() {
   const next = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep(s => Math.max(s - 1, 0));
 
-  const finish = () => {
+  const finish = async () => {
     const onboardingData = {
       childName, condition, caregiverName,
       metrics,
@@ -84,8 +84,30 @@ export default function Onboarding() {
       flareTasks: flareTasks.filter(t => t.name.trim()),
       completed: true,
     };
-    localStorage.setItem('onboarding', JSON.stringify(onboardingData));
-    navigate('/');
+
+    try {
+      const response = await fetch('http://localhost:3001/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(onboardingData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
+
+      const savedUser = await response.json();
+      localStorage.setItem('onboarding', JSON.stringify(onboardingData));
+      localStorage.setItem('userId', savedUser._id);
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+      // Fallback to localStorage only if API fails
+      localStorage.setItem('onboarding', JSON.stringify(onboardingData));
+      navigate('/');
+    }
   };
 
   const addMetric = () => {
