@@ -4,112 +4,112 @@
 
 @layer base {
   :root {
-    --background: 40 20% 98%;
-    --foreground: 220 20% 14%;
+    --background: 30 40% 97%;
+    --foreground: 25 25% 18%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 14%;
+    --card: 30 30% 99%;
+    --card-foreground: 25 25% 18%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 14%;
+    --popover: 30 30% 99%;
+    --popover-foreground: 25 25% 18%;
 
-    --primary: 152 35% 42%;
+    --primary: 158 40% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 25% 94%;
-    --secondary-foreground: 220 20% 14%;
+    --secondary: 30 30% 93%;
+    --secondary-foreground: 25 25% 18%;
 
-    --muted: 40 15% 94%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 30 20% 93%;
+    --muted-foreground: 25 12% 50%;
 
-    --accent: 152 25% 90%;
-    --accent-foreground: 152 35% 30%;
+    --accent: 158 30% 92%;
+    --accent-foreground: 158 40% 28%;
 
-    --destructive: 4 72% 56%;
+    --destructive: 8 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 152 35% 42%;
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
+    --ring: 158 40% 45%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Mode colors */
-    --mode-green: 152 45% 48%;
-    --mode-green-bg: 152 40% 94%;
-    --mode-yellow: 38 92% 50%;
-    --mode-yellow-bg: 40 90% 94%;
-    --mode-red: 4 72% 56%;
-    --mode-red-bg: 4 60% 95%;
+    /* Mode colors — warm tones */
+    --mode-green: 158 45% 42%;
+    --mode-green-bg: 158 35% 93%;
+    --mode-yellow: 35 85% 52%;
+    --mode-yellow-bg: 35 60% 93%;
+    --mode-red: 8 65% 55%;
+    --mode-red-bg: 8 50% 94%;
 
     /* Chart colors */
-    --chart-1: 152 35% 42%;
-    --chart-2: 210 60% 50%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 45% 55%;
-    --chart-5: 4 72% 56%;
+    --chart-1: 158 40% 45%;
+    --chart-2: 220 55% 55%;
+    --chart-3: 35 85% 52%;
+    --chart-4: 280 40% 58%;
+    --chart-5: 8 65% 55%;
 
     /* Semantic surface */
-    --surface-raised: 0 0% 100%;
-    --surface-sunken: 40 15% 96%;
+    --surface-raised: 30 30% 99%;
+    --surface-sunken: 30 25% 95%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 30 30% 97%;
+    --sidebar-foreground: 25 20% 30%;
+    --sidebar-primary: 25 20% 14%;
+    --sidebar-primary-foreground: 30 30% 97%;
+    --sidebar-accent: 30 25% 94%;
+    --sidebar-accent-foreground: 25 20% 14%;
+    --sidebar-border: 30 20% 89%;
+    --sidebar-ring: 158 40% 45%;
   }
 
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 40 20% 95%;
+    --background: 25 18% 9%;
+    --foreground: 30 25% 93%;
 
-    --card: 220 18% 12%;
-    --card-foreground: 40 20% 95%;
+    --card: 25 16% 13%;
+    --card-foreground: 30 25% 93%;
 
-    --popover: 220 18% 12%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 25 16% 13%;
+    --popover-foreground: 30 25% 93%;
 
-    --primary: 152 35% 50%;
+    --primary: 158 40% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 40 20% 95%;
+    --secondary: 25 14% 18%;
+    --secondary-foreground: 30 25% 93%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 25 14% 18%;
+    --muted-foreground: 25 10% 58%;
 
-    --accent: 152 25% 18%;
-    --accent-foreground: 152 35% 70%;
+    --accent: 158 25% 18%;
+    --accent-foreground: 158 35% 68%;
 
-    --destructive: 4 62% 40%;
+    --destructive: 8 55% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 152 35% 50%;
+    --border: 25 14% 22%;
+    --input: 25 14% 22%;
+    --ring: 158 40% 48%;
 
-    --mode-green: 152 45% 55%;
-    --mode-green-bg: 152 30% 15%;
-    --mode-yellow: 38 80% 55%;
-    --mode-yellow-bg: 38 40% 15%;
-    --mode-red: 4 65% 55%;
-    --mode-red-bg: 4 40% 15%;
+    --mode-green: 158 45% 52%;
+    --mode-green-bg: 158 28% 15%;
+    --mode-yellow: 35 75% 55%;
+    --mode-yellow-bg: 35 35% 15%;
+    --mode-red: 8 58% 52%;
+    --mode-red-bg: 8 35% 15%;
 
-    --surface-raised: 220 18% 14%;
-    --surface-sunken: 220 20% 6%;
+    --surface-raised: 25 16% 15%;
+    --surface-sunken: 25 18% 7%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 25 16% 11%;
+    --sidebar-foreground: 30 20% 92%;
+    --sidebar-primary: 158 40% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 25 12% 16%;
+    --sidebar-accent-foreground: 30 20% 92%;
+    --sidebar-border: 25 12% 16%;
+    --sidebar-ring: 158 40% 48%;
   }
 }
 
@@ -120,7 +120,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   }
 }
 
