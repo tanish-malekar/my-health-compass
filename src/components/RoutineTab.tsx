@@ -1,11 +1,11 @@
 import { useAppState } from '@/hooks/useAppState';
-import { Check, Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
+import { Check, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const categoryOrder = ['medications', 'care', 'nutrition', 'school', 'admin'];
 
 export default function RoutineTab() {
-  const { mode, toggleMode, tasks, toggleTask, isCheckinNow, setActiveTab, userData } = useAppState();
+  const { mode, tasks, toggleTask, isCheckinNow, setActiveTab, userData } = useAppState();
   const { t } = useTranslation();
 
   const categoryLabels: Record<string, string> = {
@@ -29,45 +29,6 @@ export default function RoutineTab() {
 
   return (
     <div className="animate-slide-up space-y-4 pb-4">
-      {/* Mode Toggle & Status Banner */}
-      {mode === 'normal' ? (
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles size={18} className="text-primary" />
-              <p className="font-bold text-primary">{t('routine.feelingGood')} 🌟</p>
-            </div>
-            <button
-              onClick={toggleMode}
-              className="flex items-center gap-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors"
-            >
-              <Flame size={14} /> {t('routine.switchToFlare')}
-            </button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('routine.havingGoodDay', { name: childName })}
-          </p>
-        </div>
-      ) : (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle size={18} className="text-destructive" />
-              <p className="font-bold text-destructive">{t('routine.flareMode')} 🔥</p>
-            </div>
-            <button
-              onClick={toggleMode}
-              className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors"
-            >
-              <Sparkles size={14} /> {t('routine.backToNormal')}
-            </button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t('routine.extraCareTasks')}
-          </p>
-        </div>
-      )}
-
       {/* Check-in Section */}
       <div className="bg-card rounded-2xl p-4 border shadow-sm">
         {isCheckinNow ? (

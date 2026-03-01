@@ -31,6 +31,7 @@ export default function SummaryTab() {
   const allChartsRef = useRef<HTMLDivElement>(null);
 
   // derive metrics list directly from log entries (unique names & types)
+  // also lookup tag from userData.metrics for display purposes
   const metrics = useMemo(() => {
     const map: Record<string, { type: 'scale' | 'boolean' }> = {};
     logs.forEach(log => {
@@ -40,12 +41,18 @@ export default function SummaryTab() {
         }
       });
     });
-    return Object.entries(map).map(([name, info]) => ({ name, type: info.type }));
-  }, [logs]);
+    return Object.entries(map).map(([name, info]) => {
+      // Find tag from userData.metrics if available
+      const userMetric = userData?.metrics?.find(um => um.name === name);
+      return { name, type: info.type, tag: userMetric?.tag || name };
+    });
+  }, [logs, userData]);
 
   const defaultMetric = metrics[0]?.name || '';
   const activeMetricName = selectedMetricName || defaultMetric;
-  const selectedMetricType = metrics.find(m => m.name === activeMetricName)?.type;
+  const selectedMetric = metrics.find(m => m.name === activeMetricName);
+  const selectedMetricType = selectedMetric?.type;
+  const selectedMetricTag = selectedMetric?.tag || activeMetricName;
 
   // LLM summary helper
   const fetchSummary = async () => {
@@ -290,7 +297,7 @@ export default function SummaryTab() {
                     : 'bg-secondary/50 text-foreground hover:bg-secondary'
                 }`}
               >
-                {metric.name}
+                {metric.tag}
                 {metric.type === 'boolean' ? ' ✓' : ''}
               </button>
             ))}
@@ -301,7 +308,7 @@ export default function SummaryTab() {
       {/* Chart */}
       <div className="bg-card rounded-2xl border p-4 shadow-sm">
         <h3 className="text-sm font-bold mb-4">
-          📈 {t('summary.trend', { metric: activeMetricName })}
+          📈 {t('summary.trend', { metric: selectedMetricTag })}
         </h3>
         <div className="h-64" ref={chartRef}>{renderChart()}</div>
       </div>
@@ -361,7 +368,7 @@ export default function SummaryTab() {
           return (
             <div key={metric.name} data-chart className="p-4 mb-4 bg-white">
               <h3 className="text-sm font-bold mb-2 text-gray-900">
-                📈 {metric.name} Trend
+                📈 {metric.tag} Trend
               </h3>
               <div className="h-48">
                 {renderChartForMetric(metric.name, metric.type, data)}
