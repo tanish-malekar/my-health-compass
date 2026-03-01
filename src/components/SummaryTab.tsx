@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import {
   LineChart,
@@ -20,6 +20,7 @@ export default function SummaryTab() {
   const [showExport, setShowExport] = useState(false);
   const [summary, setSummary] = useState<string>('');
   const [llmLoading, setLlmLoading] = useState(false);
+  const inFlightRef = useRef(false);
 
   // derive metrics list directly from log entries (unique names & types)
   const metrics = useMemo(() => {
@@ -41,30 +42,41 @@ export default function SummaryTab() {
   // LLM summary helper
   const fetchSummary = async () => {
     if (!userData) return;
+    if (inFlightRef.current) return; // prevent duplicate calls
+    inFlightRef.current = true;
     setLlmLoading(true);
     try {
-      const prompt = `Summarize this users data to help clinicians. This is for patients experiencing chronic illnesses and might have flare conditions\n\n${JSON.stringify(userData)}`;
-      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+      const prompt = `Summarize this users data to help clinicians. Use clinical terms. Don't use technical terms like "mode". Summarize the symptoms (metrics) data trends as well. Avoid using "*" or "#". Give ready to use content. \n\n${JSON.stringify(userData)}`;
+      const resp = await fetch(
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": import.meta.env.VITE_GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
         },
-        body: JSON.stringify({
-          model: 'arcee-ai/trinity-large-preview:free',
-          messages: [
-            { role: 'system', content: 'You are a clinical assistant.' },
-            { role: 'user', content: prompt },
-          ],
-        }),
-      });
+      ],
+      systemInstruction: {
+        parts: [{ text: "You are a clinical assistant." }],
+      },
+    }),
+  }
+);
       const data = await resp.json();
+      console.log('LLM response:', data);
       // openrouter returns choices similar to OpenAI
-      setSummary(data.choices?.[0]?.message?.content || 'No summary generated.');
+      setSummary(data.candidates?.[0]?.content?.parts?.[0]?.text || 'No summary generated.');
     } catch (err) {
       console.error(err);
       setSummary('Error generating summary');
     } finally {
+      inFlightRef.current = false;
       setLlmLoading(false);
     }
   };
@@ -75,6 +87,15 @@ export default function SummaryTab() {
       fetchSummary();
     }
   }, [showExport, userData, summary]);
+
+  // Prefetch summary proactively when userData becomes available (before opening panel)
+  useEffect(() => {
+    if (!showExport && userData && !summary && !llmLoading) {
+      fetchSummary();
+    }
+    // only re-run when userData or summaryType changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData]);
 
   // ✅ Transform logs safely
   const chartData = useMemo(() => {
@@ -250,11 +271,19 @@ export default function SummaryTab() {
         {showExport && (
           <div className="px-4 pb-4 space-y-3 border-t">
             {llmLoading ? (
-              <p className="text-xs text-muted-foreground">Generating summary…</p>
+              <div className="pt-3 flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
+                <p className="text-xs text-muted-foreground">Generating summary…</p>
+              </div>
             ) : (
-              <pre className="text-xs bg-secondary/50 rounded-xl p-3 overflow-auto max-h-64 whitespace-pre-wrap mt-3 text-foreground/80">
-                {summary || 'No user data available.'}
-              </pre>
+              <div className="mt-3">
+                <div className="bg-card rounded-xl p-4 shadow-sm max-h-64 overflow-auto">
+                  <h4 className="text-sm font-semibold mb-2">Clinician Summary</h4>
+                  <div className="font-sans text-base leading-7 text-foreground/90 tracking-normal whitespace-pre-wrap">
+                    {summary || 'No user data available.'}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
