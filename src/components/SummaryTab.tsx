@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppState } from '@/hooks/useAppState';
 import {
   LineChart,
@@ -15,9 +15,11 @@ import { format } from 'date-fns';
 import { FileText } from 'lucide-react';
 
 export default function SummaryTab() {
-  const { logs } = useAppState();
+  const { logs, userData } = useAppState();
   const [selectedMetricName, setSelectedMetricName] = useState<string>('');
   const [showExport, setShowExport] = useState(false);
+  const [summary, setSummary] = useState<string>('');
+  const [llmLoading, setLlmLoading] = useState(false);
 
   // derive metrics list directly from log entries (unique names & types)
   const metrics = useMemo(() => {
@@ -35,6 +37,44 @@ export default function SummaryTab() {
   const defaultMetric = metrics[0]?.name || '';
   const activeMetricName = selectedMetricName || defaultMetric;
   const selectedMetricType = metrics.find(m => m.name === activeMetricName)?.metricType;
+
+  // LLM summary helper
+  const fetchSummary = async () => {
+    if (!userData) return;
+    setLlmLoading(true);
+    try {
+      const prompt = `Summarize this users data to help clinicians. This is for patients experiencing chronic illnesses and might have flare conditions\n\n${JSON.stringify(userData)}`;
+      const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'arcee-ai/trinity-large-preview:free',
+          messages: [
+            { role: 'system', content: 'You are a clinical assistant.' },
+            { role: 'user', content: prompt },
+          ],
+        }),
+      });
+      const data = await resp.json();
+      // openrouter returns choices similar to OpenAI
+      setSummary(data.choices?.[0]?.message?.content || 'No summary generated.');
+    } catch (err) {
+      console.error(err);
+      setSummary('Error generating summary');
+    } finally {
+      setLlmLoading(false);
+    }
+  };
+
+  // trigger fetch when export panel opens
+  useEffect(() => {
+    if (showExport && !summary && userData) {
+      fetchSummary();
+    }
+  }, [showExport, userData, summary]);
 
   // ✅ Transform logs safely
   const chartData = useMemo(() => {
@@ -63,17 +103,6 @@ export default function SummaryTab() {
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [logs, activeMetricName]);
 
-  // ✅ Statistics
-  const stats = useMemo(() => {
-    if (chartData.length === 0) return null;
-
-    const values = chartData.map(d => d.value as number);
-    const avg = values.reduce((a, v) => a + v, 0) / values.length;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-
-    return { avg, min, max, count: values.length };
-  }, [chartData]);
 
   // ✅ Chart renderer
   const renderChart = () => {
@@ -141,7 +170,7 @@ export default function SummaryTab() {
             stroke="hsl(var(--muted-foreground))"
           />
           <YAxis
-            domain={[stats?.min ?? 0, stats?.max ?? 1]}
+            domain={[ 'auto', 'auto' ]}
             tick={{ fontSize: 11 }}
             stroke="hsl(var(--muted-foreground))"
           />
@@ -200,18 +229,6 @@ export default function SummaryTab() {
         <div className="h-64">{renderChart()}</div>
       </div>
 
-      {/* Statistics */}
-      {stats && selectedMetricType === 'scale' && (
-        <div className="bg-card rounded-2xl border p-4 shadow-sm">
-          <h3 className="text-sm font-bold mb-3">📊 Statistics</h3>
-          <div className="grid grid-cols-4 gap-2">
-            <Stat label="Entries" value={stats.count} />
-            <Stat label="Avg" value={Math.round(stats.avg * 10) / 10} />
-            <Stat label="Min" value={stats.min} />
-            <Stat label="Max" value={stats.max} />
-          </div>
-        </div>
-      )}
 
       {/* Export */}
       <div className="bg-card rounded-2xl border overflow-hidden shadow-sm">
@@ -232,11 +249,13 @@ export default function SummaryTab() {
 
         {showExport && (
           <div className="px-4 pb-4 space-y-3 border-t">
-            <p className="text-xs text-muted-foreground">
-              Data for {activeMetricName} with {chartData.length}{' '}
-              entries
-              {stats && selectedMetricType === 'scale' && ` (avg: ${Math.round(stats.avg * 10) / 10})`}
-            </p>
+            {llmLoading ? (
+              <p className="text-xs text-muted-foreground">Generating summary…</p>
+            ) : (
+              <pre className="text-xs bg-secondary/50 rounded-xl p-3 overflow-auto max-h-64 whitespace-pre-wrap mt-3 text-foreground/80">
+                {summary || 'No user data available.'}
+              </pre>
+            )}
           </div>
         )}
       </div>
