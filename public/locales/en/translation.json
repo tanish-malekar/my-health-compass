@@ -95,11 +95,11 @@
     "welcome": {
       "title": "Welcome to Helios",
       "description": "We'll help you track daily health, manage routines, and catch flares early. Let's set things up in just a few steps!",
-      "childName": "Child's Name",
+      "childName": "Patient's Name",
       "childNamePlaceholder": "e.g. Emma",
       "condition": "Condition / Diagnosis",
       "conditionPlaceholder": "e.g. JIA, Crohn's, Lupus",
-      "caregiverName": "Your Name (Caregiver)",
+      "caregiverName": "Caregiver's Name",
       "caregiverNamePlaceholder": "e.g. Sarah"
     },
     "metrics": {

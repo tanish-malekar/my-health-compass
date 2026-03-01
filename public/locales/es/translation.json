@@ -95,11 +95,11 @@
     "welcome": {
       "title": "Bienvenido a Helios",
       "description": "Te ayudaremos a seguir la salud diaria, gestionar rutinas y detectar brotes temprano. ¡Configuremos todo en unos pocos pasos!",
-      "childName": "Nombre del Niño",
+      "childName": "Nombre del Paciente",
       "childNamePlaceholder": "ej. Emma",
       "condition": "Condición / Diagnóstico",
       "conditionPlaceholder": "ej. AIJ, Crohn, Lupus",
-      "caregiverName": "Tu Nombre (Cuidador)",
+      "caregiverName": "Nombre del Cuidador",
       "caregiverNamePlaceholder": "ej. Sara"
     },
     "metrics": {
