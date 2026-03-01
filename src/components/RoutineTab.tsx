@@ -1,18 +1,20 @@
 import { useAppState } from '@/hooks/useAppState';
 import { Check, Clock, AlertTriangle, Sparkles, Flame } from 'lucide-react';
-
-const categoryLabels: Record<string, string> = {
-  medications: '💊 Medications',
-  care: '🧡 Care & Therapy',
-  nutrition: '🥤 Food & Hydration',
-  school: '📚 School & Work',
-  admin: '📋 Appointments',
-};
+import { useTranslation } from 'react-i18next';
 
 const categoryOrder = ['medications', 'care', 'nutrition', 'school', 'admin'];
 
 export default function RoutineTab() {
   const { mode, toggleMode, tasks, toggleTask, isCheckinNow, setActiveTab, userData } = useAppState();
+  const { t } = useTranslation();
+
+  const categoryLabels: Record<string, string> = {
+    medications: `💊 ${t('categories.medications')}`,
+    care: `🧡 ${t('categories.care')}`,
+    nutrition: `🥤 ${t('categories.nutrition')}`,
+    school: `📚 ${t('categories.school')}`,
+    admin: `📋 ${t('categories.admin')}`,
+  };
 
   // All tasks are already filtered by mode in useAppState
   const grouped = categoryOrder
@@ -23,7 +25,7 @@ export default function RoutineTab() {
   const totalCount = tasks.length;
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
-  const childName = userData?.childName || 'your child';
+  const childName = userData?.childName || t('common.yourChild');
 
   return (
     <div className="animate-slide-up space-y-4 pb-4">
@@ -33,17 +35,17 @@ export default function RoutineTab() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-primary" />
-              <p className="font-bold text-primary">Feeling Good 🌟</p>
+              <p className="font-bold text-primary">{t('routine.feelingGood')} 🌟</p>
             </div>
             <button
               onClick={toggleMode}
               className="flex items-center gap-1.5 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors"
             >
-              <Flame size={14} /> Switch to Flare
+              <Flame size={14} /> {t('routine.switchToFlare')}
             </button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {childName} is having a good day!
+            {t('routine.havingGoodDay', { name: childName })}
           </p>
         </div>
       ) : (
@@ -51,17 +53,17 @@ export default function RoutineTab() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-destructive" />
-              <p className="font-bold text-destructive">Flare Mode 🔥</p>
+              <p className="font-bold text-destructive">{t('routine.flareMode')} 🔥</p>
             </div>
             <button
               onClick={toggleMode}
               className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl px-3 py-1.5 text-sm font-semibold transition-colors"
             >
-              <Sparkles size={14} /> Back to Normal
+              <Sparkles size={14} /> {t('routine.backToNormal')}
             </button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Extra care tasks and medications are shown.
+            {t('routine.extraCareTasks')}
           </p>
         </div>
       )}
@@ -70,22 +72,22 @@ export default function RoutineTab() {
       <div className="bg-card rounded-2xl p-4 border shadow-sm">
         {isCheckinNow ? (
           <>
-            <h3 className="text-sm font-bold mb-2">⏰ Time to Check In!</h3>
+            <h3 className="text-sm font-bold mb-2">⏰ {t('routine.timeToCheckIn')}</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              Let's see how {childName} is doing right now.
+              {t('routine.letsSeHow', { name: childName })}
             </p>
             <button
               onClick={() => setActiveTab('log')}
               className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-bold text-sm hover:opacity-90 transition-opacity"
             >
-              📝 Check In Now
+              📝 {t('routine.checkInNow')}
             </button>
           </>
         ) : (
           <>
-            <h3 className="text-sm font-bold mb-2">✅ You're All Caught Up!</h3>
+            <h3 className="text-sm font-bold mb-2">✅ {t('routine.youreAllCaughtUp')}</h3>
             <p className="text-sm text-muted-foreground">
-              You're all good with logging. Next check-in is 2 hrs from now.
+              {t('routine.allGoodWithLogging')}
             </p>
           </>
         )}
@@ -94,7 +96,7 @@ export default function RoutineTab() {
       {/* Progress */}
       <div className="bg-card rounded-2xl p-4 border shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold">Today's To-Do</span>
+          <span className="text-sm font-semibold">{t('routine.todaysToDo')}</span>
           <span className="text-sm text-muted-foreground font-semibold">{completedCount}/{totalCount} ✨</span>
         </div>
         <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
@@ -104,7 +106,7 @@ export default function RoutineTab() {
           />
         </div>
         {progress === 100 && (
-          <p className="text-xs text-primary font-semibold mt-2">All done for today — amazing! 🎉</p>
+          <p className="text-xs text-primary font-semibold mt-2">{t('routine.allDoneForToday')} 🎉</p>
         )}
       </div>
 
@@ -114,8 +116,8 @@ export default function RoutineTab() {
           <div className="bg-card rounded-2xl p-6 border shadow-sm text-center">
             <p className="text-muted-foreground text-sm">
               {mode === 'normal' 
-                ? 'No tasks or medications set up yet. Complete onboarding to add them!'
-                : 'No flare tasks or medications set up. Add them in settings.'}
+                ? t('routine.noTasksNormal')
+                : t('routine.noTasksFlare')}
             </p>
           </div>
         ) : (
@@ -144,7 +146,7 @@ export default function RoutineTab() {
                     </div>
                     {!task.completed && (
                       <span className="text-xs bg-accent text-accent-foreground rounded-full px-3 py-1 font-semibold shrink-0">
-                        Done ✓
+                        {t('routine.done')} ✓
                       </span>
                     )}
                   </button>

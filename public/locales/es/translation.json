@@ -1,0 +1,194 @@
+{
+  "app": {
+    "name": "Helios",
+    "tagline": "Esta herramienta ayuda con el seguimiento y la comunicación. No proporciona asesoramiento médico."
+  },
+  "modes": {
+    "normal": "Sintiéndose Bien",
+    "flare": "Modo Brote"
+  },
+  "tabs": {
+    "myDay": "Mi Día",
+    "checkIn": "Registro",
+    "progress": "Progreso"
+  },
+  "routine": {
+    "feelingGood": "Sintiéndose Bien",
+    "switchToFlare": "Cambiar a Brote",
+    "havingGoodDay": "¡{{name}} está teniendo un buen día!",
+    "flareMode": "Modo Brote",
+    "backToNormal": "Volver a Normal",
+    "extraCareTasks": "Se muestran tareas y medicamentos adicionales.",
+    "timeToCheckIn": "¡Hora de Registrarse!",
+    "letsSeHow": "Veamos cómo está {{name}} ahora.",
+    "checkInNow": "Registrarse Ahora",
+    "youreAllCaughtUp": "¡Estás al Día!",
+    "allGoodWithLogging": "Todo bien con el registro. El próximo es en 2 horas.",
+    "todaysToDo": "Tareas de Hoy",
+    "allDoneForToday": "¡Todo listo por hoy — increíble!",
+    "noTasksNormal": "¡Aún no hay tareas o medicamentos configurados. Completa la configuración para agregarlos!",
+    "noTasksFlare": "No hay tareas o medicamentos de brote configurados. Agrégalos en ajustes.",
+    "done": "Listo"
+  },
+  "categories": {
+    "medications": "Medicamentos",
+    "care": "Cuidado y Terapia",
+    "nutrition": "Comida e Hidratación",
+    "school": "Escuela y Trabajo",
+    "admin": "Citas"
+  },
+  "log": {
+    "readyForCheckIn": "¿Listo para un registro?",
+    "lastOneWas": "El último fue {{time}}",
+    "firstCheckIn": "¡Este será tu primero!",
+    "lookingStable": "Las cosas se ven estables",
+    "trackingFlare": "Siguiendo durante un brote",
+    "noMetricsSetUp": "¡Aún no hay métricas configuradas. Completa la configuración para agregar métricas a seguir!",
+    "letsGo": "Vamos",
+    "quickCheckIn": "Registro Rápido",
+    "metricsToTrack": "{{count}} métricas a seguir — ¡toma unos {{seconds}} segundos!",
+    "higherWorse": "Mayor = peor",
+    "higherBetter": "Mayor = mejor",
+    "baseline": "Línea base",
+    "yesIsGood": "Sí = bueno",
+    "yesIsBad": "Sí = malo",
+    "yes": "Sí",
+    "no": "No",
+    "anythingElse": "¿Algo más que compartir?",
+    "howAreYouFeeling": "¿Cómo te sientes hoy?",
+    "saveCheckIn": "Guardar Registro",
+    "checkInSaved": "¡Registro guardado!",
+    "greatJob": "Buen trabajo siguiendo cómo está {{name}}.",
+    "goToMyDay": "Ir a Mi Día",
+    "done": "Listo"
+  },
+  "summary": {
+    "selectMetric": "Seleccionar Métrica",
+    "trend": "Tendencia de {{metric}}",
+    "noDataAvailable": "No hay datos disponibles para {{metric}}",
+    "yesNo": "Sí / No",
+    "shareWithCareTeam": "Compartir con Equipo Médico",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "generatingSummary": "Generando resumen…",
+    "clinicianSummary": "Resumen Clínico",
+    "noUserData": "No hay datos de usuario disponibles.",
+    "downloadPdf": "Descargar PDF"
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Bienvenido",
+      "letsSetUp": "Configuremos tu seguimiento diario",
+      "metricsToTrack": "Métricas a Seguir",
+      "addThingsToMonitor": "Agrega las cosas que quieres monitorear diariamente",
+      "medications": "Medicamentos",
+      "regularDailyMeds": "Tus medicamentos diarios regulares",
+      "dailyRoutine": "Rutina Diaria",
+      "tasksEveryDay": "Tareas que haces todos los días",
+      "flareMedications": "Medicamentos de Brote",
+      "extraMeds": "Medicamentos extra para momentos difíciles",
+      "flareRoutine": "Rutina de Brote",
+      "whatChangesDuringFlare": "¿Qué cambia durante un brote?",
+      "allSet": "¡Todo Listo!",
+      "readyToGo": "Estás listo para comenzar"
+    },
+    "welcome": {
+      "title": "Bienvenido a Helios",
+      "description": "Te ayudaremos a seguir la salud diaria, gestionar rutinas y detectar brotes temprano. ¡Configuremos todo en unos pocos pasos!",
+      "childName": "Nombre del Niño",
+      "childNamePlaceholder": "ej. Emma",
+      "condition": "Condición / Diagnóstico",
+      "conditionPlaceholder": "ej. AIJ, Crohn, Lupus",
+      "caregiverName": "Tu Nombre (Cuidador)",
+      "caregiverNamePlaceholder": "ej. Sara"
+    },
+    "metrics": {
+      "addMetricsDescription": "Agrega métricas que quieres seguir diariamente. Elige escala (0-10) o métricas sí/no.",
+      "quickAddSuggestions": "Sugerencias rápidas",
+      "scale": "Escala (0-10)",
+      "yesNo": "Sí/No",
+      "baselineNormalDay": "Línea base (día normal)",
+      "higherWorse": "Mayor = peor",
+      "higherBetter": "Mayor = mejor",
+      "yesGood": "Sí = bueno",
+      "yesBad": "Sí = malo",
+      "newMetric": "Nueva Métrica",
+      "metricNamePlaceholder": "Nombre de métrica (ej. Rigidez, Náusea, Pasos)",
+      "unit": "Unidad",
+      "unitPlaceholder": "/10, hrs, vasos",
+      "min": "Mín",
+      "max": "Máx",
+      "higherValueWorse": "Mayor valor = peor (ej. Dolor)",
+      "higherValueBetter": "Mayor valor = mejor (ej. Energía)",
+      "tapToToggle": "Toca para cambiar",
+      "baselineEnabled": "Línea base activada",
+      "addBaselineOptional": "Agregar valor base (opcional)",
+      "baselineValue": "Valor base",
+      "cancel": "Cancelar",
+      "addMetric": "Agregar Métrica",
+      "addCustomMetric": "Agregar Métrica Personalizada",
+      "addAtLeastOne": "Agrega al menos una métrica para seguir diariamente"
+    },
+    "medications": {
+      "addRegularMeds": "Agrega los medicamentos diarios regulares de {{name}}. Omite si no hay ninguno ahora.",
+      "medication": "Medicamento",
+      "medicationName": "Nombre del medicamento",
+      "dose": "Dosis (ej. 5mg)",
+      "morning": "Mañana",
+      "afternoon": "Tarde",
+      "evening": "Noche",
+      "bedtime": "Antes de dormir",
+      "asNeeded": "Según necesidad",
+      "addMedication": "Agregar Medicamento"
+    },
+    "tasks": {
+      "addDailyTasks": "Agrega tareas diarias como comidas, terapia, escuela, o cualquier cosa que {{name}} haga todos los días.",
+      "task": "Tarea",
+      "taskNamePlaceholder": "Nombre de tarea (ej. Fisioterapia)",
+      "timePlaceholder": "Hora (ej. 8 AM)",
+      "addTask": "Agregar Tarea"
+    },
+    "flareMeds": {
+      "extraMedsNotice": "Estos son medicamentos extra que solo se usan durante brotes o días difíciles.",
+      "addRescueMeds": "Agrega cualquier medicamento de rescate o según necesidad recetado para brotes."
+    },
+    "flareRoutine": {
+      "flareTasksNotice": "Estas tareas aparecen solo cuando {{name}} está en un brote.",
+      "modifiedActivities": "Cosas como descanso extra, notas de acomodación escolar, o actividades modificadas."
+    },
+    "complete": {
+      "title": "¡Todo listo!",
+      "trackerReady": "El seguimiento de {{name}} está listo. Siempre puedes actualizar los ajustes después.",
+      "summary": "Resumen",
+      "trackingMetrics": "Siguiendo {{count}} métricas",
+      "dailyMedications": "{{count}} medicamentos diarios",
+      "dailyTasks": "{{count}} tareas diarias",
+      "flareMedications": "{{count}} medicamentos de brote",
+      "flareTasks": "{{count}} tareas de brote"
+    },
+    "navigation": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "letsGo": "¡Vamos!",
+      "setup": "Configuración de Helios"
+    }
+  },
+  "suggestedMetrics": {
+    "sleepQuality": "Calidad de Sueño",
+    "painLevel": "Nivel de Dolor",
+    "energy": "Energía",
+    "foodIntake": "Ingesta de Comida",
+    "mood": "Estado de Ánimo",
+    "nausea": "Náusea",
+    "exercised": "Ejercicio",
+    "headache": "Dolor de Cabeza"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "¡Ups! Página no encontrada",
+    "returnHome": "Volver al Inicio"
+  },
+  "common": {
+    "yourChild": "tu hijo/a"
+  }
+}
