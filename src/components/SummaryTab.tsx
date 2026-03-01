@@ -14,6 +14,8 @@ import {
 import { format } from 'date-fns';
 import { FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function SummaryTab() {
   const { logs, userData } = useAppState();
@@ -23,6 +25,10 @@ export default function SummaryTab() {
   const [summary, setSummary] = useState<string>('');
   const [llmLoading, setLlmLoading] = useState(false);
   const inFlightRef = useRef(false);
+
+  const chartRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const allChartsRef = useRef<HTMLDivElement>(null);
 
   // derive metrics list directly from log entries (unique names & types)
   const metrics = useMemo(() => {
@@ -90,6 +96,50 @@ export default function SummaryTab() {
     }
   }, [showExport, userData, summary]);
 
+  // PDF generation - captures ALL metric charts
+  const generatePdf = async () => {
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    let yOffset = 20;
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
+
+    // Capture all charts from the hidden container
+    if (allChartsRef.current) {
+      const chartContainers = allChartsRef.current.querySelectorAll('[data-chart]');
+      for (let i = 0; i < chartContainers.length; i++) {
+        const chartEl = chartContainers[i] as HTMLElement;
+        const canvas = await html2canvas(chartEl, { scale: 2, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        // Check if we need a new page
+        if (yOffset + pdfHeight > pageHeight - 20) {
+          pdf.addPage();
+          yOffset = 20;
+        }
+
+        pdf.addImage(imgData, 'PNG', 20, yOffset, pdfWidth, pdfHeight);
+        yOffset += pdfHeight + 15;
+      }
+    }
+
+    // Add AI summary
+    if (summaryRef.current) {
+      const canvas2 = await html2canvas(summaryRef.current, { scale: 1, backgroundColor: '#ffffff' });
+      const imgData2 = canvas2.toDataURL('image/png');
+      const imgProps2 = pdf.getImageProperties(imgData2);
+      const pdfHeight2 = (imgProps2.height * pdfWidth) / imgProps2.width;
+      if (yOffset + pdfHeight2 > pageHeight - 20) {
+        pdf.addPage();
+        yOffset = 20;
+      }
+      pdf.addImage(imgData2, 'PNG', 20, yOffset, pdfWidth, pdfHeight2);
+    }
+
+    pdf.save('summary.pdf');
+  };
+
   // Prefetch summary proactively when userData becomes available (before opening panel)
   useEffect(() => {
     if (!showExport && userData && !summary && !llmLoading) {
@@ -99,15 +149,13 @@ export default function SummaryTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData]);
 
-  // ✅ Transform logs safely
-  const chartData = useMemo(() => {
-    if (!activeMetricName || logs.length === 0) return [];
+  // ✅ Transform logs safely - for a specific metric
+  const getChartDataForMetric = (metricName: string) => {
+    if (!metricName || logs.length === 0) return [];
 
     return logs
       .map(log => {
-        const metricValue = log.metrics.find(
-          m => m.name === activeMetricName
-        );
+        const metricValue = log.metrics.find(m => m.name === metricName);
         if (!metricValue) return null;
 
         const value =
@@ -124,25 +172,28 @@ export default function SummaryTab() {
       })
       .filter((d): d is { date: string; timestamp: number; value: number; metricType: string } => d !== null)
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [logs, activeMetricName]);
+  };
+
+  // Chart data for currently selected metric (for display)
+  const chartData = useMemo(() => getChartDataForMetric(activeMetricName), [logs, activeMetricName]);
 
 
-  // ✅ Chart renderer
-  const renderChart = () => {
-    if (!activeMetricName || chartData.length === 0) {
+  // ✅ Chart renderer for any metric
+  const renderChartForMetric = (metricName: string, metricType: 'scale' | 'boolean', data: typeof chartData) => {
+    if (!metricName || data.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center text-muted-foreground">
-          <p className="text-sm">{t('summary.noDataAvailable', { metric: activeMetricName })}</p>
+          <p className="text-sm">{t('summary.noDataAvailable', { metric: metricName })}</p>
         </div>
       );
     }
 
-    // ✅ BOOLEAN CHART
-    if (selectedMetricType === 'boolean') {
+    // BOOLEAN CHART
+    if (metricType === 'boolean') {
       return (
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart
-            data={chartData}
+            data={data}
             margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -179,11 +230,11 @@ export default function SummaryTab() {
       );
     }
 
-    // ✅ SCALE CHART
+    // SCALE CHART
     return (
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={chartData}
+          data={data}
           margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -212,12 +263,15 @@ export default function SummaryTab() {
             stroke="hsl(var(--chart-1))"
             strokeWidth={2}
             dot={false}
-            name={activeMetricName}
+            name={metricName}
           />
         </LineChart>
       </ResponsiveContainer>
     );
   };
+
+  // ✅ Chart renderer for currently selected metric (convenience wrapper)
+  const renderChart = () => renderChartForMetric(activeMetricName, selectedMetricType || 'scale', chartData);
 
   return (
     <div className="animate-slide-up space-y-4 pb-4">
@@ -249,7 +303,7 @@ export default function SummaryTab() {
         <h3 className="text-sm font-bold mb-4">
           📈 {t('summary.trend', { metric: activeMetricName })}
         </h3>
-        <div className="h-64">{renderChart()}</div>
+        <div className="h-64" ref={chartRef}>{renderChart()}</div>
       </div>
 
 
@@ -271,14 +325,20 @@ export default function SummaryTab() {
         </button>
 
         {showExport && (
-          <div className="px-4 pb-4 space-y-3 border-t">
+          <div className="px-4 pb-4 pt-3 space-y-3 border-t">
+            <button
+              onClick={generatePdf}
+              className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors"
+            >
+              📄 {t('summary.downloadPdf')}
+            </button>
             {llmLoading ? (
               <div className="pt-3 flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
                 <p className="text-xs text-muted-foreground">{t('summary.generatingSummary')}</p>
               </div>
             ) : (
-              <div className="mt-3">
+              <div className="mt-3" ref={summaryRef}>
                 <div className="bg-card rounded-xl p-4 shadow-sm max-h-64 overflow-auto">
                   <h4 className="text-sm font-semibold mb-2">{t('summary.clinicianSummary')}</h4>
                   <div className="font-sans text-base leading-7 text-foreground/90 tracking-normal whitespace-pre-wrap">
@@ -289,6 +349,26 @@ export default function SummaryTab() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Hidden container for PDF export - renders all metric charts */}
+      <div
+        ref={allChartsRef}
+        style={{ position: 'absolute', left: '-9999px', top: 0, width: '600px', background: '#fff' }}
+      >
+        {metrics.map(metric => {
+          const data = getChartDataForMetric(metric.name);
+          return (
+            <div key={metric.name} data-chart className="p-4 mb-4 bg-white">
+              <h3 className="text-sm font-bold mb-2 text-gray-900">
+                📈 {metric.name} Trend
+              </h3>
+              <div className="h-48">
+                {renderChartForMetric(metric.name, metric.metricType, data)}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
