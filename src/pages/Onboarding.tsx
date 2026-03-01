@@ -226,7 +226,7 @@ export default function Onboarding() {
               <Heart className="text-primary" size={36} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Welcome to MyDay 🩵</h2>
+              <h2 className="text-xl font-bold text-foreground">Welcome to Helios ☀️</h2>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 We'll help you track daily health, manage routines, and catch flares early. Let's set things up in just a few steps!
               </p>
@@ -531,7 +531,7 @@ export default function Onboarding() {
     <div className="flex flex-col min-h-screen max-w-lg mx-auto bg-background">
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b px-4 py-3.5">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">🩵 MyDay Setup</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground">☀️ Helios Setup</h1>
           <span className="text-sm text-muted-foreground font-semibold">{step + 1} / {STEPS.length}</span>
         </div>
         <div className="w-full h-1.5 bg-secondary rounded-full mt-2 overflow-hidden">
