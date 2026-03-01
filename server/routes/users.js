@@ -111,35 +111,19 @@ router.post('/:id/logs', async (req, res) => {
       note
     };
     
-    // Check if any metric exceeds baseline to determine flare status
+    // Check if any scale metric value is greater than 6 to determine flare status
     let hasFlareCondition = false;
     
     for (const logMetric of metrics) {
-      // Find the corresponding user metric definition
-      const userMetric = user.metrics.find(m => m.name === logMetric.name);
-      if (!userMetric || !userMetric.hasBaseline) continue;
-      
-      if (logMetric.metricType === 'scale') {
-        const baseline = userMetric.baseline;
-        if (baseline !== undefined) {
-          // For higherIsWorse metrics (like Pain): value > baseline = flare
-          // For higherIsBetter metrics (like Energy): value < baseline = flare
-          if (userMetric.higherIsWorse && logMetric.value > baseline) {
-            hasFlareCondition = true;
-            break;
-          } else if (!userMetric.higherIsWorse && logMetric.value < baseline) {
-            hasFlareCondition = true;
-            break;
-          }
-        }
-      } else if (logMetric.metricType === 'boolean') {
-        const baselineBoolean = userMetric.baselineBoolean;
-        if (baselineBoolean !== undefined && logMetric.value !== baselineBoolean) {
-          hasFlareCondition = true;
-          break;
-        }
+      // Only check scale metrics, ignore boolean
+      if (logMetric.type === 'scale' && logMetric.value > 6) {
+        hasFlareCondition = true;
+        break;
       }
     }
+    
+    // Store previous flare state to determine if this is a new flare
+    const wasFlareEnabled = user.isFlareEnabled;
     
     user.logs.push(logEntry);
     user.isFlareEnabled = hasFlareCondition;
@@ -147,6 +131,27 @@ router.post('/:id/logs', async (req, res) => {
     user.lastCheckinTime = new Date();
     
     await user.save();
+    
+    // If flare is newly detected (wasn't enabled before but is now), call flare APIs (fire and forget)
+    if (hasFlareCondition && !wasFlareEnabled) {
+      // Call flare alert API (async, don't wait)
+      fetch('http://localhost:8001/flare-alert-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: req.params.id }),
+      })
+        .then(() => console.log('Flare alert call triggered for user:', req.params.id))
+        .catch(err => console.error('Error calling flare alert API:', err));
+      
+      // Call generate flare routine API (async, don't wait)
+      fetch('http://localhost:8001/generate-flare-routine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: req.params.id }),
+      })
+        .then(() => console.log('Flare routine generation triggered for user:', req.params.id))
+        .catch(err => console.error('Error calling flare routine API:', err));
+    }
     
     res.status(201).json({ 
       message: 'Log entry added successfully', 
@@ -183,7 +188,7 @@ router.post('/:id/migrate-metrics', async (req, res) => {
     // Update each metric to include missing fields with defaults
     user.metrics = user.metrics.map(metric => ({
       name: metric.name,
-      metricType: metric.metricType || 'scale',
+      type: metric.type || 'scale',
       unit: metric.unit || '/10',
       min: metric.min ?? 0,
       max: metric.max ?? 10,

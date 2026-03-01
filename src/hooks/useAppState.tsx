@@ -5,7 +5,7 @@ export type Mode = 'normal' | 'flare';
 export interface MetricValue {
   name: string;
   value: number | boolean;
-  metricType: 'scale' | 'boolean';
+  type: 'scale' | 'boolean';
 }
 
 export interface LogEntry {
@@ -18,7 +18,7 @@ export interface LogEntry {
 export interface UserMetric {
   _id?: string;
   name: string;
-  metricType: 'scale' | 'boolean';
+  type: 'scale' | 'boolean';
   unit: string;
   min: number;
   max: number;
@@ -260,7 +260,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error adding log:', error);
     }
-  }, []);
+  }, [setMode]);
 
   const toggleTask = useCallback((id: string) => {
     setCompletedTaskIds(prev => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppState, MetricValue } from '@/hooks/useAppState';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle2, ArrowRight, Heart } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Heart, Pill } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { useTranslation } from 'react-i18next';
 
@@ -12,14 +12,16 @@ export default function LogTab() {
   const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>('idle');
   const [metricValues, setMetricValues] = useState<Record<string, number | boolean>>({});
+  const [medicationValues, setMedicationValues] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState('');
 
   const childName = userData?.childName || t('common.yourChild');
   const userMetrics = userData?.metrics || [];
+  const userMedications = userData?.medications || [];
 
   // Helper to get default value for a metric
   const getDefaultValue = (metric: typeof userMetrics[0]): number | boolean => {
-    if (metric.metricType === 'boolean') {
+    if (metric.type === 'boolean') {
       return metric.hasBaseline && metric.baselineBoolean !== undefined ? metric.baselineBoolean : false;
     } else {
       return metric.hasBaseline && metric.baseline !== undefined ? metric.baseline : Math.floor((metric.min + metric.max) / 2);
@@ -35,14 +37,30 @@ export default function LogTab() {
       });
       setMetricValues(initialValues);
     }
-  }, [userMetrics]);
+    if (userMedications.length > 0) {
+      const initialMedValues: Record<string, boolean> = {};
+      userMedications.forEach(med => {
+        initialMedValues[med.name] = false;
+      });
+      setMedicationValues(initialMedValues);
+    }
+  }, [userMetrics, userMedications]);
 
   const handleSave = async () => {
     const metrics: MetricValue[] = userMetrics.map(metric => ({
       name: metric.name,
       value: metricValues[metric.name] ?? getDefaultValue(metric),
-      metricType: metric.metricType,
+      type: metric.type,
     }));
+
+    // Add medication entries to metrics
+    userMedications.forEach(med => {
+      metrics.push({
+        name: med.name,
+        value: medicationValues[med.name] ?? false,
+        type: 'boolean',
+      });
+    });
 
     await addLog(metrics, note || undefined);
     setScreen('result');
@@ -54,12 +72,21 @@ export default function LogTab() {
       initialValues[metric.name] = getDefaultValue(metric);
     });
     setMetricValues(initialValues);
+    const initialMedValues: Record<string, boolean> = {};
+    userMedications.forEach(med => {
+      initialMedValues[med.name] = false;
+    });
+    setMedicationValues(initialMedValues);
     setNote('');
     setScreen('idle');
   };
 
   const updateMetricValue = (name: string, value: number | boolean) => {
     setMetricValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  const updateMedicationValue = (name: string, value: boolean) => {
+    setMedicationValues(prev => ({ ...prev, [name]: value }));
   };
 
   if (screen === 'idle') {
@@ -105,7 +132,7 @@ export default function LogTab() {
           <div className="space-y-6">
             {userMetrics.map((metric) => (
               <div key={metric.name}>
-                {metric.metricType === 'scale' ? (
+                {metric.type === 'scale' ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold">{metric.name}</span>
@@ -125,18 +152,11 @@ export default function LogTab() {
                       />
                       <span className="text-xs text-muted-foreground">{metric.max}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {metric.higherIsWorse ? `↑ ${t('log.higherWorse')}` : `↑ ${t('log.higherBetter')}`}
-                      {metric.hasBaseline && metric.baseline !== undefined && ` • ${t('log.baseline')}: ${metric.baseline}${metric.unit}`}
-                    </p>
                   </>
                 ) : (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold">{metric.name}</span>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${metric.yesIsGood ? 'text-primary' : 'text-destructive'}`}>
-                        {metric.yesIsGood ? t('log.yesIsGood') : t('log.yesIsBad')}
-                      </span>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -166,6 +186,51 @@ export default function LogTab() {
             ))}
           </div>
         </div>
+
+        {userMedications.length > 0 && (
+          <div className="bg-card rounded-2xl border p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Pill size={18} className="text-primary" />
+              <h2 className="text-base font-bold">Medications 💊</h2>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Did you take these today?</p>
+            <div className="space-y-4">
+              {userMedications.map((med) => (
+                <div key={med.name}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="text-sm font-semibold">{med.name}</span>
+                      {med.dose && <span className="text-xs text-muted-foreground ml-2">({med.dose})</span>}
+                    </div>
+                    {med.time && <span className="text-xs text-muted-foreground">{med.time}</span>}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateMedicationValue(med.name, true)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                        medicationValues[med.name] === true 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      ✓ Yes
+                    </button>
+                    <button
+                      onClick={() => updateMedicationValue(med.name, false)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                        medicationValues[med.name] === false 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                      }`}
+                    >
+                      ✗ No
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-card rounded-2xl border p-5 shadow-sm">
           <label className="text-sm font-bold block mb-2">{t('log.anythingElse')} 💭</label>

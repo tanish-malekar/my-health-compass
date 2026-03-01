@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const metricSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  metricType: { type: String, enum: ['scale', 'boolean'], default: 'scale' },
+  type: { type: String, enum: ['scale', 'boolean'], default: 'scale' },
   unit: { type: String, default: '/10' },
   min: { type: Number, default: 0 },
   max: { type: Number, default: 10 },
@@ -28,7 +28,7 @@ const taskSchema = new mongoose.Schema({
 const logMetricSchema = new mongoose.Schema({
   name: { type: String, required: true },
   value: { type: mongoose.Schema.Types.Mixed, required: true },
-  metricType: { type: String, enum: ['scale', 'boolean'], required: true }
+  type: { type: String, enum: ['scale', 'boolean'], required: true }
 }, { strict: false });
 
 const logEntrySchema = new mongoose.Schema({

@@ -32,20 +32,20 @@ export default function SummaryTab() {
 
   // derive metrics list directly from log entries (unique names & types)
   const metrics = useMemo(() => {
-    const map: Record<string, { metricType: 'scale' | 'boolean' }> = {};
+    const map: Record<string, { type: 'scale' | 'boolean' }> = {};
     logs.forEach(log => {
       log.metrics.forEach(m => {
         if (!map[m.name]) {
-          map[m.name] = { metricType: m.metricType };
+          map[m.name] = { type: m.type };
         }
       });
     });
-    return Object.entries(map).map(([name, info]) => ({ name, metricType: info.metricType }));
+    return Object.entries(map).map(([name, info]) => ({ name, type: info.type }));
   }, [logs]);
 
   const defaultMetric = metrics[0]?.name || '';
   const activeMetricName = selectedMetricName || defaultMetric;
-  const selectedMetricType = metrics.find(m => m.name === activeMetricName)?.metricType;
+  const selectedMetricType = metrics.find(m => m.name === activeMetricName)?.type;
 
   // LLM summary helper
   const fetchSummary = async () => {
@@ -159,7 +159,7 @@ export default function SummaryTab() {
         if (!metricValue) return null;
 
         const value =
-          metricValue.metricType === 'boolean'
+          metricValue.type === 'boolean'
             ? (metricValue.value ? 1 : 0)
             : (metricValue.value as number);
 
@@ -167,10 +167,10 @@ export default function SummaryTab() {
           date: format(new Date(log.time), 'MMM d HH:mm'),
           timestamp: new Date(log.time).getTime(),
           value,
-          metricType: metricValue.metricType,
+          type: metricValue.type,
         };
       })
-      .filter((d): d is { date: string; timestamp: number; value: number; metricType: string } => d !== null)
+      .filter((d): d is { date: string; timestamp: number; value: number; type: string } => d !== null)
       .sort((a, b) => a.timestamp - b.timestamp);
   };
 
@@ -179,7 +179,7 @@ export default function SummaryTab() {
 
 
   // ✅ Chart renderer for any metric
-  const renderChartForMetric = (metricName: string, metricType: 'scale' | 'boolean', data: typeof chartData) => {
+  const renderChartForMetric = (metricName: string, type: 'scale' | 'boolean', data: typeof chartData) => {
     if (!metricName || data.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center text-muted-foreground">
@@ -189,7 +189,7 @@ export default function SummaryTab() {
     }
 
     // BOOLEAN CHART
-    if (metricType === 'boolean') {
+    if (type === 'boolean') {
       return (
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart
@@ -291,7 +291,7 @@ export default function SummaryTab() {
                 }`}
               >
                 {metric.name}
-                {metric.metricType === 'boolean' ? ' ✓' : ''}
+                {metric.type === 'boolean' ? ' ✓' : ''}
               </button>
             ))}
           </div>
@@ -364,7 +364,7 @@ export default function SummaryTab() {
                 📈 {metric.name} Trend
               </h3>
               <div className="h-48">
-                {renderChartForMetric(metric.name, metric.metricType, data)}
+                {renderChartForMetric(metric.name, metric.type, data)}
               </div>
             </div>
           );
