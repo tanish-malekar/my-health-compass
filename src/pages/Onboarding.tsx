@@ -23,21 +23,22 @@ interface MetricEntry {
   unit: string;
   min: number;
   max: number;
-  baseline: number;
-  baselineBoolean: boolean;
+  baseline?: number;
+  baselineBoolean?: boolean;
+  hasBaseline: boolean;
   higherIsWorse: boolean;
   yesIsGood: boolean;
 }
 
 const SUGGESTED_METRICS: Omit<MetricEntry, 'id'>[] = [
-  { name: 'Sleep Quality', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
-  { name: 'Pain Level', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 2, baselineBoolean: true, higherIsWorse: true, yesIsGood: true },
-  { name: 'Energy', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
-  { name: 'Food Intake', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
-  { name: 'Mood', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
-  { name: 'Nausea', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 0, baselineBoolean: false, higherIsWorse: true, yesIsGood: false },
-  { name: 'Exercised', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 1, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
-  { name: 'Headache', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 0, baselineBoolean: false, higherIsWorse: true, yesIsGood: false },
+  { name: 'Sleep Quality', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, hasBaseline: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Pain Level', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 2, hasBaseline: true, higherIsWorse: true, yesIsGood: true },
+  { name: 'Energy', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, hasBaseline: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Food Intake', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, hasBaseline: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Mood', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, hasBaseline: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Nausea', metricType: 'boolean', unit: '', min: 0, max: 1, baselineBoolean: false, hasBaseline: true, higherIsWorse: true, yesIsGood: false },
+  { name: 'Exercised', metricType: 'boolean', unit: '', min: 0, max: 1, baselineBoolean: true, hasBaseline: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Headache', metricType: 'boolean', unit: '', min: 0, max: 1, baselineBoolean: false, hasBaseline: true, higherIsWorse: true, yesIsGood: false },
 ];
 
 const ROUTINE_CATEGORIES = [
@@ -63,7 +64,7 @@ export default function Onboarding() {
   // Step 1: Dynamic metrics
   const [metrics, setMetrics] = useState<MetricEntry[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newMetric, setNewMetric] = useState<Omit<MetricEntry, 'id'>>({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, higherIsWorse: false, yesIsGood: true });
+  const [newMetric, setNewMetric] = useState<Omit<MetricEntry, 'id'>>({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, hasBaseline: false, higherIsWorse: false, yesIsGood: true });
 
   // Step 2: Medications
   const [medications, setMedications] = useState<MedEntry[]>([{ id: '1', name: '', dose: '', time: 'Morning' }]);
@@ -119,8 +120,15 @@ export default function Onboarding() {
 
   const addMetric = () => {
     if (!newMetric.name.trim()) return;
-    setMetrics([...metrics, { ...newMetric, id: Date.now().toString() }]);
-    setNewMetric({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, higherIsWorse: false, yesIsGood: true });
+    // Only include baseline values if hasBaseline is true
+    const metricToAdd: MetricEntry = {
+      ...newMetric,
+      id: Date.now().toString(),
+      baseline: newMetric.hasBaseline ? newMetric.baseline : undefined,
+      baselineBoolean: newMetric.hasBaseline ? newMetric.baselineBoolean : undefined,
+    };
+    setMetrics([...metrics, metricToAdd]);
+    setNewMetric({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, hasBaseline: false, higherIsWorse: false, yesIsGood: true });
     setShowAddForm(false);
   };
 
@@ -373,13 +381,24 @@ export default function Onboarding() {
                         {newMetric.higherIsWorse ? '📈 Higher value = worse (e.g. Pain)' : '📈 Higher value = better (e.g. Energy)'}
                         <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
                       </button>
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="text-xs font-semibold text-muted-foreground">Baseline value</label>
-                          <span className="text-sm font-bold text-primary">{newMetric.baseline}{newMetric.unit}</span>
+                      <button
+                        onClick={() => setNewMetric({ ...newMetric, hasBaseline: !newMetric.hasBaseline })}
+                        className={`w-full text-left text-sm p-3 rounded-xl border transition-all ${
+                          newMetric.hasBaseline ? 'bg-primary/10 border-primary/30' : 'bg-secondary border-transparent'
+                        }`}
+                      >
+                        {newMetric.hasBaseline ? '📊 Baseline enabled' : '📊 Add baseline value (optional)'}
+                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to {newMetric.hasBaseline ? 'disable' : 'enable'}</span>
+                      </button>
+                      {newMetric.hasBaseline && (
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Baseline value</label>
+                            <span className="text-sm font-bold text-primary">{newMetric.baseline}{newMetric.unit}</span>
+                          </div>
+                          <Slider value={[newMetric.baseline ?? newMetric.min]} min={newMetric.min} max={newMetric.max} step={1} onValueChange={([v]) => setNewMetric({ ...newMetric, baseline: v })} />
                         </div>
-                        <Slider value={[newMetric.baseline]} min={newMetric.min} max={newMetric.max} step={1} onValueChange={([v]) => setNewMetric({ ...newMetric, baseline: v })} />
-                      </div>
+                      )}
                     </>
                   ) : (
                     <>
@@ -392,22 +411,33 @@ export default function Onboarding() {
                         {newMetric.yesIsGood ? '✓ Yes = good (e.g. Exercised)' : '✗ Yes = bad (e.g. Had headache)'}
                         <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
                       </button>
-                      <div>
-                        <div className="flex justify-between items-center mb-2">
-                          <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
-                          <span className="text-sm font-bold text-primary">{newMetric.baselineBoolean ? 'Yes' : 'No'}</span>
+                      <button
+                        onClick={() => setNewMetric({ ...newMetric, hasBaseline: !newMetric.hasBaseline })}
+                        className={`w-full text-left text-sm p-3 rounded-xl border transition-all ${
+                          newMetric.hasBaseline ? 'bg-primary/10 border-primary/30' : 'bg-secondary border-transparent'
+                        }`}
+                      >
+                        {newMetric.hasBaseline ? '📊 Baseline enabled' : '📊 Add baseline value (optional)'}
+                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to {newMetric.hasBaseline ? 'disable' : 'enable'}</span>
+                      </button>
+                      {newMetric.hasBaseline && (
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
+                            <span className="text-sm font-bold text-primary">{newMetric.baselineBoolean ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setNewMetric({ ...newMetric, baselineBoolean: true })}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                            >Yes</button>
+                            <button
+                              onClick={() => setNewMetric({ ...newMetric, baselineBoolean: false })}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                            >No</button>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setNewMetric({ ...newMetric, baselineBoolean: true })}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                          >Yes</button>
-                          <button
-                            onClick={() => setNewMetric({ ...newMetric, baselineBoolean: false })}
-                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                          >No</button>
-                        </div>
-                      </div>
+                      )}
                     </>
                   )}
                   

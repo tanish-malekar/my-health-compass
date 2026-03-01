@@ -15,16 +15,21 @@ export default function LogTab() {
   const childName = userData?.childName || 'your child';
   const userMetrics = userData?.metrics || [];
 
+  // Helper to get default value for a metric
+  const getDefaultValue = (metric: typeof userMetrics[0]): number | boolean => {
+    if (metric.metricType === 'boolean') {
+      return metric.hasBaseline && metric.baselineBoolean !== undefined ? metric.baselineBoolean : false;
+    } else {
+      return metric.hasBaseline && metric.baseline !== undefined ? metric.baseline : Math.floor((metric.min + metric.max) / 2);
+    }
+  };
+
   // Initialize metric values when userData loads
   useEffect(() => {
     if (userMetrics.length > 0) {
       const initialValues: Record<string, number | boolean> = {};
       userMetrics.forEach(metric => {
-        if (metric.metricType === 'boolean') {
-          initialValues[metric.name] = metric.baselineBoolean;
-        } else {
-          initialValues[metric.name] = metric.baseline;
-        }
+        initialValues[metric.name] = getDefaultValue(metric);
       });
       setMetricValues(initialValues);
     }
@@ -33,7 +38,7 @@ export default function LogTab() {
   const handleSave = async () => {
     const metrics: MetricValue[] = userMetrics.map(metric => ({
       name: metric.name,
-      value: metricValues[metric.name] ?? (metric.metricType === 'boolean' ? metric.baselineBoolean : metric.baseline),
+      value: metricValues[metric.name] ?? getDefaultValue(metric),
       metricType: metric.metricType,
     }));
 
@@ -44,11 +49,7 @@ export default function LogTab() {
   const resetAndNew = () => {
     const initialValues: Record<string, number | boolean> = {};
     userMetrics.forEach(metric => {
-      if (metric.metricType === 'boolean') {
-        initialValues[metric.name] = metric.baselineBoolean;
-      } else {
-        initialValues[metric.name] = metric.baseline;
-      }
+      initialValues[metric.name] = getDefaultValue(metric);
     });
     setMetricValues(initialValues);
     setNote('');
@@ -107,13 +108,13 @@ export default function LogTab() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold">{metric.name}</span>
                       <span className="text-sm font-bold text-primary bg-accent rounded-full w-8 h-8 flex items-center justify-center">
-                        {metricValues[metric.name] ?? metric.baseline}
+                        {metricValues[metric.name] ?? getDefaultValue(metric)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{metric.min}</span>
                       <Slider
-                        value={[Number(metricValues[metric.name] ?? metric.baseline)]}
+                        value={[Number(metricValues[metric.name] ?? getDefaultValue(metric))]}
                         onValueChange={([v]) => updateMetricValue(metric.name, v)}
                         max={metric.max}
                         min={metric.min}
@@ -123,7 +124,8 @@ export default function LogTab() {
                       <span className="text-xs text-muted-foreground">{metric.max}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {metric.higherIsWorse ? '↑ Higher = worse' : '↑ Higher = better'} • Baseline: {metric.baseline}{metric.unit}
+                      {metric.higherIsWorse ? '↑ Higher = worse' : '↑ Higher = better'}
+                      {metric.hasBaseline && metric.baseline !== undefined && ` • Baseline: ${metric.baseline}${metric.unit}`}
                     </p>
                   </>
                 ) : (

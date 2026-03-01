@@ -22,8 +22,9 @@ export interface UserMetric {
   unit: string;
   min: number;
   max: number;
-  baseline: number;
-  baselineBoolean: boolean;
+  baseline?: number;
+  baselineBoolean?: boolean;
+  hasBaseline: boolean;
   higherIsWorse: boolean;
   yesIsGood: boolean;
 }
@@ -51,6 +52,7 @@ export interface UserData {
   condition?: string;
   caregiverName?: string;
   mode: Mode;
+  isFlareEnabled: boolean;
   isCheckinNow: boolean;
   lastCheckinTime?: Date;
   metrics: UserMetric[];
@@ -173,7 +175,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUserData(data);
-        setModeState(data.mode || 'normal');
+        // Set mode based on isFlareEnabled field
+        setModeState(data.isFlareEnabled ? 'flare' : 'normal');
         setIsCheckinNowState(data.isCheckinNow || false);
         // Load logs from user data
         if (data.logs && Array.isArray(data.logs)) {
@@ -243,6 +246,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setLogs(prev => [...prev, data.log]);
         setIsCheckinNowState(false);
+        
+        // Update flare mode based on check-in results
+        if (data.isFlareEnabled) {
+          setMode('flare');
+        } else {
+          setMode('normal');
+        }
+        
+        // Update userData
+        setUserData(prev => prev ? { ...prev, isFlareEnabled: data.isFlareEnabled } : prev);
       }
     } catch (error) {
       console.error('Error adding log:', error);

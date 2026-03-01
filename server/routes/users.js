@@ -111,7 +111,38 @@ router.post('/:id/logs', async (req, res) => {
       note
     };
     
+    // Check if any metric exceeds baseline to determine flare status
+    let hasFlareCondition = false;
+    
+    for (const logMetric of metrics) {
+      // Find the corresponding user metric definition
+      const userMetric = user.metrics.find(m => m.name === logMetric.name);
+      if (!userMetric || !userMetric.hasBaseline) continue;
+      
+      if (logMetric.metricType === 'scale') {
+        const baseline = userMetric.baseline;
+        if (baseline !== undefined) {
+          // For higherIsWorse metrics (like Pain): value > baseline = flare
+          // For higherIsBetter metrics (like Energy): value < baseline = flare
+          if (userMetric.higherIsWorse && logMetric.value > baseline) {
+            hasFlareCondition = true;
+            break;
+          } else if (!userMetric.higherIsWorse && logMetric.value < baseline) {
+            hasFlareCondition = true;
+            break;
+          }
+        }
+      } else if (logMetric.metricType === 'boolean') {
+        const baselineBoolean = userMetric.baselineBoolean;
+        if (baselineBoolean !== undefined && logMetric.value !== baselineBoolean) {
+          hasFlareCondition = true;
+          break;
+        }
+      }
+    }
+    
     user.logs.push(logEntry);
+    user.isFlareEnabled = hasFlareCondition;
     user.isCheckinNow = false;
     user.lastCheckinTime = new Date();
     
@@ -119,7 +150,8 @@ router.post('/:id/logs', async (req, res) => {
     
     res.status(201).json({ 
       message: 'Log entry added successfully', 
-      log: user.logs[user.logs.length - 1] 
+      log: user.logs[user.logs.length - 1],
+      isFlareEnabled: user.isFlareEnabled
     });
   } catch (error) {
     console.error('Error adding log entry:', error);
