@@ -1,0 +1,193 @@
+{
+  "app": {
+    "name": "Helios",
+    "tagline": "This tool supports tracking and communication. It does not provide medical advice."
+  },
+  "modes": {
+    "normal": "Feeling Good",
+    "flare": "Flare Mode"
+  },
+  "tabs": {
+    "myDay": "My Day",
+    "checkIn": "Check In",
+    "progress": "Progress"
+  },
+  "routine": {
+    "feelingGood": "Feeling Good",
+    "switchToFlare": "Switch to Flare",
+    "havingGoodDay": "{{name}} is having a good day!",
+    "flareMode": "Flare Mode",
+    "backToNormal": "Back to Normal",
+    "extraCareTasks": "Extra care tasks and medications are shown.",
+    "timeToCheckIn": "Time to Check In!",
+    "letsSeHow": "Let's see how {{name}} is doing right now.",
+    "checkInNow": "Check In Now",
+    "youreAllCaughtUp": "You're All Caught Up!",
+    "allGoodWithLogging": "You're all good with logging. Next check-in is 2 hrs from now.",
+    "todaysToDo": "Today's To-Do",
+    "allDoneForToday": "All done for today — amazing!",
+    "noTasksNormal": "No tasks or medications set up yet. Complete onboarding to add them!",
+    "noTasksFlare": "No flare tasks or medications set up. Add them in settings.",
+    "done": "Done"
+  },
+  "categories": {
+    "medications": "Medications",
+    "care": "Care & Therapy",
+    "nutrition": "Food & Hydration",
+    "school": "School & Work",
+    "admin": "Appointments"
+  },
+  "log": {
+    "readyForCheckIn": "Ready for a check-in?",
+    "lastOneWas": "Last one was {{time}}",
+    "firstCheckIn": "This will be your first one!",
+    "lookingStable": "Things are looking stable",
+    "trackingFlare": "Tracking during a flare",
+    "noMetricsSetUp": "No metrics set up yet. Complete onboarding to add metrics to track!",
+    "letsGo": "Let's Go",
+    "quickCheckIn": "Quick Check-In",
+    "metricsToTrack": "{{count}} metrics to track — takes about {{seconds}} seconds!",
+    "higherWorse": "Higher = worse",
+    "higherBetter": "Higher = better",
+    "baseline": "Baseline",
+    "yesIsGood": "Yes = good",
+    "yesIsBad": "Yes = bad",
+    "yes": "Yes",
+    "no": "No",
+    "anythingElse": "Anything else to share?",
+    "howAreYouFeeling": "How are you feeling today?",
+    "saveCheckIn": "Save Check-In",
+    "checkInSaved": "Check-in saved!",
+    "greatJob": "Great job keeping track of how {{name}} is doing.",
+    "goToMyDay": "Go to My Day",
+    "done": "Done"
+  },
+  "summary": {
+    "selectMetric": "Select Metric",
+    "trend": "{{metric}} Trend",
+    "noDataAvailable": "No data available for {{metric}}",
+    "yesNo": "Yes / No",
+    "shareWithCareTeam": "Share with Care Team",
+    "hide": "Hide",
+    "show": "Show",
+    "generatingSummary": "Generating summary…",
+    "clinicianSummary": "Clinician Summary",
+    "noUserData": "No user data available."
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Welcome",
+      "letsSetUp": "Let's set up your daily tracker",
+      "metricsToTrack": "Metrics to Track",
+      "addThingsToMonitor": "Add the things you want to monitor daily",
+      "medications": "Medications",
+      "regularDailyMeds": "Your regular daily medications",
+      "dailyRoutine": "Daily Routine",
+      "tasksEveryDay": "Tasks you do every day",
+      "flareMedications": "Flare Medications",
+      "extraMeds": "Extra meds when things get tough",
+      "flareRoutine": "Flare Routine",
+      "whatChangesDuringFlare": "What changes during a flare?",
+      "allSet": "All Set!",
+      "readyToGo": "You're ready to go"
+    },
+    "welcome": {
+      "title": "Welcome to Helios",
+      "description": "We'll help you track daily health, manage routines, and catch flares early. Let's set things up in just a few steps!",
+      "childName": "Child's Name",
+      "childNamePlaceholder": "e.g. Emma",
+      "condition": "Condition / Diagnosis",
+      "conditionPlaceholder": "e.g. JIA, Crohn's, Lupus",
+      "caregiverName": "Your Name (Caregiver)",
+      "caregiverNamePlaceholder": "e.g. Sarah"
+    },
+    "metrics": {
+      "addMetricsDescription": "Add metrics you want to track daily. Choose scale (0-10) or yes/no metrics.",
+      "quickAddSuggestions": "Quick add suggestions",
+      "scale": "Scale (0-10)",
+      "yesNo": "Yes/No",
+      "baselineNormalDay": "Baseline (normal day)",
+      "higherWorse": "Higher = worse",
+      "higherBetter": "Higher = better",
+      "yesGood": "Yes = good",
+      "yesBad": "Yes = bad",
+      "newMetric": "New Metric",
+      "metricNamePlaceholder": "Metric name (e.g. Stiffness, Nausea, Steps)",
+      "unit": "Unit",
+      "unitPlaceholder": "/10, hrs, cups",
+      "min": "Min",
+      "max": "Max",
+      "higherValueWorse": "Higher value = worse (e.g. Pain)",
+      "higherValueBetter": "Higher value = better (e.g. Energy)",
+      "tapToToggle": "Tap to toggle",
+      "baselineEnabled": "Baseline enabled",
+      "addBaselineOptional": "Add baseline value (optional)",
+      "baselineValue": "Baseline value",
+      "cancel": "Cancel",
+      "addMetric": "Add Metric",
+      "addCustomMetric": "Add Custom Metric",
+      "addAtLeastOne": "Add at least one metric to track daily"
+    },
+    "medications": {
+      "addRegularMeds": "Add {{name}}'s regular daily medications. Skip if none right now.",
+      "medication": "Medication",
+      "medicationName": "Medication name",
+      "dose": "Dose (e.g. 5mg)",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "bedtime": "Bedtime",
+      "asNeeded": "As needed",
+      "addMedication": "Add Medication"
+    },
+    "tasks": {
+      "addDailyTasks": "Add daily tasks like meals, therapy, school, or anything {{name}} does every day.",
+      "task": "Task",
+      "taskNamePlaceholder": "Task name (e.g. Physical therapy)",
+      "timePlaceholder": "Time (e.g. 8 AM)",
+      "addTask": "Add Task"
+    },
+    "flareMeds": {
+      "extraMedsNotice": "These are extra medications only used during flares or bad days.",
+      "addRescueMeds": "Add any rescue or as-needed medications prescribed for flare-ups."
+    },
+    "flareRoutine": {
+      "flareTasksNotice": "These tasks appear only when {{name}} is in a flare.",
+      "modifiedActivities": "Things like extra rest, school accommodation notes, or modified activities."
+    },
+    "complete": {
+      "title": "You're all set!",
+      "trackerReady": "{{name}}'s tracker is ready. You can always update settings later.",
+      "summary": "Summary",
+      "trackingMetrics": "Tracking {{count}} metrics",
+      "dailyMedications": "{{count}} daily medications",
+      "dailyTasks": "{{count}} daily tasks",
+      "flareMedications": "{{count}} flare medications",
+      "flareTasks": "{{count}} flare tasks"
+    },
+    "navigation": {
+      "back": "Back",
+      "next": "Next",
+      "letsGo": "Let's Go!",
+      "setup": "Helios Setup"
+    }
+  },
+  "suggestedMetrics": {
+    "sleepQuality": "Sleep Quality",
+    "painLevel": "Pain Level",
+    "energy": "Energy",
+    "foodIntake": "Food Intake",
+    "mood": "Mood",
+    "nausea": "Nausea",
+    "exercised": "Exercised",
+    "headache": "Headache"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Oops! Page not found",
+    "returnHome": "Return to Home"
+  },
+  "common": {
+    "yourChild": "your child"
+  }
+}

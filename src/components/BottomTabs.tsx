@@ -1,14 +1,16 @@
 import { useAppState } from '@/hooks/useAppState';
 import { Home, ClipboardList, BarChart3 } from 'lucide-react';
-
-const tabs = [
-  { id: 'routine', label: 'My Day', icon: Home },
-  { id: 'log', label: 'Check In', icon: ClipboardList },
-  { id: 'summary', label: 'Progress', icon: BarChart3 },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function BottomTabs() {
   const { activeTab, setActiveTab } = useAppState();
+  const { t } = useTranslation();
+
+  const tabs = [
+    { id: 'routine', label: t('tabs.myDay'), icon: Home },
+    { id: 'log', label: t('tabs.checkIn'), icon: ClipboardList },
+    { id: 'summary', label: t('tabs.progress'), icon: BarChart3 },
+  ];
 
   return (
     <nav className="sticky bottom-0 z-50 bg-card/90 backdrop-blur-lg border-t">
@@ -30,7 +32,7 @@ export default function BottomTabs() {
         })}
       </div>
       <p className="text-[10px] text-muted-foreground text-center pb-2 px-4 leading-tight">
-        This tool supports tracking and communication. It does not provide medical advice.
+        {t('app.tagline')}
       </p>
     </nav>
   );

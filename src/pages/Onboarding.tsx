@@ -5,16 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus, X, Heart, Sparkles } from 'lucide-react';
-
-const STEPS = [
-  { title: '👋 Welcome', subtitle: "Let's set up your daily tracker" },
-  { title: '📊 Metrics to Track', subtitle: 'Add the things you want to monitor daily' },
-  { title: '💊 Medications', subtitle: 'Your regular daily medications' },
-  { title: '📋 Daily Routine', subtitle: 'Tasks you do every day' },
-  { title: '🔥 Flare Medications', subtitle: 'Extra meds when things get tough' },
-  { title: '🛌 Flare Routine', subtitle: 'What changes during a flare?' },
-  { title: '🎉 All Set!', subtitle: "You're ready to go" },
-];
+import { useTranslation } from 'react-i18next';
 
 interface MetricEntry {
   id: string;
@@ -41,20 +32,31 @@ const SUGGESTED_METRICS: Omit<MetricEntry, 'id'>[] = [
   { name: 'Headache', metricType: 'boolean', unit: '', min: 0, max: 1, baselineBoolean: false, hasBaseline: true, higherIsWorse: true, yesIsGood: false },
 ];
 
-const ROUTINE_CATEGORIES = [
-  { id: 'medications', label: '💊 Medications' },
-  { id: 'care', label: '🧡 Care & Therapy' },
-  { id: 'nutrition', label: '🥤 Food & Hydration' },
-  { id: 'school', label: '📚 School & Work' },
-  { id: 'admin', label: '📋 Admin' },
-];
-
 interface MedEntry { id: string; name: string; dose: string; time: string; }
 interface TaskEntry { id: string; name: string; category: string; time: string; }
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
+
+  const STEPS = [
+    { title: `👋 ${t('onboarding.steps.welcome')}`, subtitle: t('onboarding.steps.letsSetUp') },
+    { title: `📊 ${t('onboarding.steps.metricsToTrack')}`, subtitle: t('onboarding.steps.addThingsToMonitor') },
+    { title: `💊 ${t('onboarding.steps.medications')}`, subtitle: t('onboarding.steps.regularDailyMeds') },
+    { title: `📋 ${t('onboarding.steps.dailyRoutine')}`, subtitle: t('onboarding.steps.tasksEveryDay') },
+    { title: `🔥 ${t('onboarding.steps.flareMedications')}`, subtitle: t('onboarding.steps.extraMeds') },
+    { title: `🛏 ${t('onboarding.steps.flareRoutine')}`, subtitle: t('onboarding.steps.whatChangesDuringFlare') },
+    { title: `🎉 ${t('onboarding.steps.allSet')}`, subtitle: t('onboarding.steps.readyToGo') },
+  ];
+
+  const ROUTINE_CATEGORIES = [
+    { id: 'medications', label: `💊 ${t('categories.medications')}` },
+    { id: 'care', label: `🧡 ${t('categories.care')}` },
+    { id: 'nutrition', label: `🧃 ${t('categories.nutrition')}` },
+    { id: 'school', label: `📚 ${t('categories.school')}` },
+    { id: 'admin', label: `📋 ${t('categories.admin')}` },
+  ];
 
   // Step 0: Profile
   const [childName, setChildName] = useState('');
@@ -173,22 +175,26 @@ export default function Onboarding() {
         <Card key={med.id} className="border-border/60">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-muted-foreground">Medication {i + 1}</span>
+              <span className="text-sm font-semibold text-muted-foreground">{t('onboarding.medications.medication')} {i + 1}</span>
               {list.length > 1 && (
                 <button onClick={() => removeMed(list, setList, med.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X size={16} /></button>
               )}
             </div>
-            <Input placeholder="Medication name" value={med.name} onChange={e => updateMed(list, setList, med.id, 'name', e.target.value)} className="bg-secondary/50" />
+            <Input placeholder={t('onboarding.medications.medicationName')} value={med.name} onChange={e => updateMed(list, setList, med.id, 'name', e.target.value)} className="bg-secondary/50" />
             <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Dose (e.g. 5mg)" value={med.dose} onChange={e => updateMed(list, setList, med.id, 'dose', e.target.value)} className="bg-secondary/50" />
+              <Input placeholder={t('onboarding.medications.dose')} value={med.dose} onChange={e => updateMed(list, setList, med.id, 'dose', e.target.value)} className="bg-secondary/50" />
               <select value={med.time} onChange={e => updateMed(list, setList, med.id, 'time', e.target.value)} className="rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm">
-                <option>Morning</option><option>Afternoon</option><option>Evening</option><option>Bedtime</option><option>As needed</option>
+                <option value="Morning">{t('onboarding.medications.morning')}</option>
+                <option value="Afternoon">{t('onboarding.medications.afternoon')}</option>
+                <option value="Evening">{t('onboarding.medications.evening')}</option>
+                <option value="Bedtime">{t('onboarding.medications.bedtime')}</option>
+                <option value="As needed">{t('onboarding.medications.asNeeded')}</option>
               </select>
             </div>
           </CardContent>
         </Card>
       ))}
-      <Button variant="outline" onClick={() => addMed(list, setList)} className="w-full border-dashed"><Plus size={16} /> Add Medication</Button>
+      <Button variant="outline" onClick={() => addMed(list, setList)} className="w-full border-dashed"><Plus size={16} /> {t('onboarding.medications.addMedication')}</Button>
     </div>
   );
 
@@ -198,22 +204,22 @@ export default function Onboarding() {
         <Card key={task.id} className="border-border/60">
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-muted-foreground">Task {i + 1}</span>
+              <span className="text-sm font-semibold text-muted-foreground">{t('onboarding.tasks.task')} {i + 1}</span>
               {list.length > 1 && (
                 <button onClick={() => removeTask(list, setList, task.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X size={16} /></button>
               )}
             </div>
-            <Input placeholder="Task name (e.g. Physical therapy)" value={task.name} onChange={e => updateTask(list, setList, task.id, 'name', e.target.value)} className="bg-secondary/50" />
+            <Input placeholder={t('onboarding.tasks.taskNamePlaceholder')} value={task.name} onChange={e => updateTask(list, setList, task.id, 'name', e.target.value)} className="bg-secondary/50" />
             <div className="grid grid-cols-2 gap-2">
               <select value={task.category} onChange={e => updateTask(list, setList, task.id, 'category', e.target.value)} className="rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm">
                 {ROUTINE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <Input placeholder="Time (e.g. 8 AM)" value={task.time} onChange={e => updateTask(list, setList, task.id, 'time', e.target.value)} className="bg-secondary/50" />
+              <Input placeholder={t('onboarding.tasks.timePlaceholder')} value={task.time} onChange={e => updateTask(list, setList, task.id, 'time', e.target.value)} className="bg-secondary/50" />
             </div>
           </CardContent>
         </Card>
       ))}
-      <Button variant="outline" onClick={() => addTask(list, setList)} className="w-full border-dashed"><Plus size={16} /> Add Task</Button>
+      <Button variant="outline" onClick={() => addTask(list, setList)} className="w-full border-dashed"><Plus size={16} /> {t('onboarding.tasks.addTask')}</Button>
     </div>
   );
 
@@ -226,23 +232,23 @@ export default function Onboarding() {
               <Heart className="text-primary" size={36} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">Welcome to Helios ☀️</h2>
+              <h2 className="text-xl font-bold text-foreground">{t('onboarding.welcome.title')} ☀️</h2>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                We'll help you track daily health, manage routines, and catch flares early. Let's set things up in just a few steps!
+                {t('onboarding.welcome.description')}
               </p>
             </div>
             <div className="space-y-3 text-left">
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Child's Name</label>
-                <Input placeholder="e.g. Emma" value={childName} onChange={e => setChildName(e.target.value)} className="bg-secondary/50" />
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">{t('onboarding.welcome.childName')}</label>
+                <Input placeholder={t('onboarding.welcome.childNamePlaceholder')} value={childName} onChange={e => setChildName(e.target.value)} className="bg-secondary/50" />
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Condition / Diagnosis</label>
-                <Input placeholder="e.g. JIA, Crohn's, Lupus" value={condition} onChange={e => setCondition(e.target.value)} className="bg-secondary/50" />
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">{t('onboarding.welcome.condition')}</label>
+                <Input placeholder={t('onboarding.welcome.conditionPlaceholder')} value={condition} onChange={e => setCondition(e.target.value)} className="bg-secondary/50" />
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground mb-1.5 block">Your Name (Caregiver)</label>
-                <Input placeholder="e.g. Sarah" value={caregiverName} onChange={e => setCaregiverName(e.target.value)} className="bg-secondary/50" />
+                <label className="text-sm font-semibold text-foreground mb-1.5 block">{t('onboarding.welcome.caregiverName')}</label>
+                <Input placeholder={t('onboarding.welcome.caregiverNamePlaceholder')} value={caregiverName} onChange={e => setCaregiverName(e.target.value)} className="bg-secondary/50" />
               </div>
             </div>
           </div>
@@ -252,13 +258,13 @@ export default function Onboarding() {
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Add metrics you want to track daily. Choose scale (0-10) or yes/no metrics.
+              {t('onboarding.metrics.addMetricsDescription')}
             </p>
 
             {/* Suggested quick-adds */}
             {SUGGESTED_METRICS.filter(s => !metrics.some(m => m.name === s.name)).length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2">💡 Quick add suggestions</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">💡 {t('onboarding.metrics.quickAddSuggestions')}</p>
                 <div className="flex flex-wrap gap-2">
                   {SUGGESTED_METRICS.filter(s => !metrics.some(m => m.name === s.name)).map(s => (
                     <button
@@ -289,22 +295,22 @@ export default function Onboarding() {
                           {m.metricType === 'scale' ? (
                             <span className="text-xs text-muted-foreground ml-2">({m.min}–{m.max} {m.unit})</span>
                           ) : (
-                            <span className="text-xs text-muted-foreground ml-2">(Yes/No)</span>
+                            <span className="text-xs text-muted-foreground ml-2">({t('onboarding.metrics.yesNo')})</span>
                           )}
                         </div>
                         <button onClick={() => removeMetric(m.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X size={16} /></button>
                       </div>
                       <div className="flex items-center gap-1">
                         {m.metricType === 'scale' ? (
-                          <span className="text-xs text-muted-foreground px-1">{m.higherIsWorse ? '✓ Higher = worse' : '✓ Higher = better'}</span>
+                          <span className="text-xs text-muted-foreground px-1">{m.higherIsWorse ? `✓ ${t('onboarding.metrics.higherWorse')}` : `✓ ${t('onboarding.metrics.higherBetter')}`}</span>
                         ) : (
-                          <span className="text-xs text-muted-foreground px-1">{m.yesIsGood ? '✓ Yes = good' : '✓ Yes = bad'}</span>
+                          <span className="text-xs text-muted-foreground px-1">{m.yesIsGood ? `✓ ${t('onboarding.metrics.yesGood')}` : `✓ ${t('onboarding.metrics.yesBad')}`}</span>
                         )}
                       </div>
                       {m.metricType === 'scale' ? (
                         <div>
                           <div className="flex justify-between items-center mb-1">
-                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
+                            <label className="text-xs font-semibold text-muted-foreground">{t('onboarding.metrics.baselineNormalDay')}</label>
                             <span className="text-sm font-bold text-primary">{m.baseline}{m.unit}</span>
                           </div>
                           <div className="flex items-center gap-3">
@@ -316,18 +322,18 @@ export default function Onboarding() {
                       ) : (
                         <div>
                           <div className="flex justify-between items-center mb-2">
-                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
-                            <span className="text-sm font-bold text-primary">{m.baselineBoolean ? 'Yes' : 'No'}</span>
+                            <label className="text-xs font-semibold text-muted-foreground">{t('onboarding.metrics.baselineNormalDay')}</label>
+                            <span className="text-sm font-bold text-primary">{m.baselineBoolean ? t('log.yes') : t('log.no')}</span>
                           </div>
                           <div className="flex gap-2">
                             <button
                               onClick={() => updateMetricBaselineBoolean(m.id, true)}
                               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${m.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                            >Yes</button>
+                            >{t('log.yes')}</button>
                             <button
                               onClick={() => updateMetricBaselineBoolean(m.id, false)}
                               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!m.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                            >No</button>
+                            >{t('log.no')}</button>
                           </div>
                         </div>
                       )}
@@ -341,34 +347,34 @@ export default function Onboarding() {
             {showAddForm ? (
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4 space-y-3">
-                  <p className="text-sm font-semibold">New Metric</p>
-                  <Input placeholder="Metric name (e.g. Stiffness, Nausea, Steps)" value={newMetric.name} onChange={e => setNewMetric({ ...newMetric, name: e.target.value })} className="bg-background" />
+                  <p className="text-sm font-semibold">{t('onboarding.metrics.newMetric')}</p>
+                  <Input placeholder={t('onboarding.metrics.metricNamePlaceholder')} value={newMetric.name} onChange={e => setNewMetric({ ...newMetric, name: e.target.value })} className="bg-background" />
                   
                   {/* Metric Type Selector */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => setNewMetric({ ...newMetric, metricType: 'scale' })}
                       className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.metricType === 'scale' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                    >📊 Scale (0-10)</button>
+                    >📊 {t('onboarding.metrics.scale')}</button>
                     <button
                       onClick={() => setNewMetric({ ...newMetric, metricType: 'boolean' })}
                       className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.metricType === 'boolean' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                    >✓ Yes/No</button>
+                    >✓ {t('onboarding.metrics.yesNo')}</button>
                   </div>
 
                   {newMetric.metricType === 'scale' ? (
                     <>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">Unit</label>
-                          <Input placeholder="/10, hrs, cups" value={newMetric.unit} onChange={e => setNewMetric({ ...newMetric, unit: e.target.value })} className="bg-background" />
+                          <label className="text-xs text-muted-foreground mb-1 block">{t('onboarding.metrics.unit')}</label>
+                          <Input placeholder={t('onboarding.metrics.unitPlaceholder')} value={newMetric.unit} onChange={e => setNewMetric({ ...newMetric, unit: e.target.value })} className="bg-background" />
                         </div>
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">Min</label>
+                          <label className="text-xs text-muted-foreground mb-1 block">{t('onboarding.metrics.min')}</label>
                           <Input type="number" value={newMetric.min} onChange={e => setNewMetric({ ...newMetric, min: Number(e.target.value) })} className="bg-background" />
                         </div>
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">Max</label>
+                          <label className="text-xs text-muted-foreground mb-1 block">{t('onboarding.metrics.max')}</label>
                           <Input type="number" value={newMetric.max} onChange={e => setNewMetric({ ...newMetric, max: Number(e.target.value) })} className="bg-background" />
                         </div>
                       </div>
@@ -378,8 +384,8 @@ export default function Onboarding() {
                           newMetric.higherIsWorse ? 'bg-destructive/10 border-destructive/30' : 'bg-primary/10 border-primary/30'
                         }`}
                       >
-                        {newMetric.higherIsWorse ? '📈 Higher value = worse (e.g. Pain)' : '📈 Higher value = better (e.g. Energy)'}
-                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
+                        {newMetric.higherIsWorse ? `📈 ${t('onboarding.metrics.higherValueWorse')}` : `📈 ${t('onboarding.metrics.higherValueBetter')}`}
+                        <span className="text-xs text-muted-foreground block mt-0.5">{t('onboarding.metrics.tapToToggle')}</span>
                       </button>
                       <button
                         onClick={() => setNewMetric({ ...newMetric, hasBaseline: !newMetric.hasBaseline })}
@@ -387,13 +393,13 @@ export default function Onboarding() {
                           newMetric.hasBaseline ? 'bg-primary/10 border-primary/30' : 'bg-secondary border-transparent'
                         }`}
                       >
-                        {newMetric.hasBaseline ? '📊 Baseline enabled' : '📊 Add baseline value (optional)'}
-                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to {newMetric.hasBaseline ? 'disable' : 'enable'}</span>
+                        {newMetric.hasBaseline ? `📊 ${t('onboarding.metrics.baselineEnabled')}` : `📊 ${t('onboarding.metrics.addBaselineOptional')}`}
+                        <span className="text-xs text-muted-foreground block mt-0.5">{t('onboarding.metrics.tapToToggle')}</span>
                       </button>
                       {newMetric.hasBaseline && (
                         <div>
                           <div className="flex justify-between items-center mb-1">
-                            <label className="text-xs font-semibold text-muted-foreground">Baseline value</label>
+                            <label className="text-xs font-semibold text-muted-foreground">{t('onboarding.metrics.baselineValue')}</label>
                             <span className="text-sm font-bold text-primary">{newMetric.baseline}{newMetric.unit}</span>
                           </div>
                           <Slider value={[newMetric.baseline ?? newMetric.min]} min={newMetric.min} max={newMetric.max} step={1} onValueChange={([v]) => setNewMetric({ ...newMetric, baseline: v })} />
@@ -408,8 +414,8 @@ export default function Onboarding() {
                           newMetric.yesIsGood ? 'bg-primary/10 border-primary/30' : 'bg-destructive/10 border-destructive/30'
                         }`}
                       >
-                        {newMetric.yesIsGood ? '✓ Yes = good (e.g. Exercised)' : '✗ Yes = bad (e.g. Had headache)'}
-                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
+                        {newMetric.yesIsGood ? `✓ ${t('onboarding.metrics.yesGood')}` : `✗ ${t('onboarding.metrics.yesBad')}`}
+                        <span className="text-xs text-muted-foreground block mt-0.5">{t('onboarding.metrics.tapToToggle')}</span>
                       </button>
                       <button
                         onClick={() => setNewMetric({ ...newMetric, hasBaseline: !newMetric.hasBaseline })}
@@ -423,18 +429,18 @@ export default function Onboarding() {
                       {newMetric.hasBaseline && (
                         <div>
                           <div className="flex justify-between items-center mb-2">
-                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
-                            <span className="text-sm font-bold text-primary">{newMetric.baselineBoolean ? 'Yes' : 'No'}</span>
+                            <label className="text-xs font-semibold text-muted-foreground">{t('onboarding.metrics.baselineNormalDay')}</label>
+                            <span className="text-sm font-bold text-primary">{newMetric.baselineBoolean ? t('log.yes') : t('log.no')}</span>
                           </div>
                           <div className="flex gap-2">
                             <button
                               onClick={() => setNewMetric({ ...newMetric, baselineBoolean: true })}
                               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                            >Yes</button>
+                            >{t('log.yes')}</button>
                             <button
                               onClick={() => setNewMetric({ ...newMetric, baselineBoolean: false })}
                               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-                            >No</button>
+                            >{t('log.no')}</button>
                           </div>
                         </div>
                       )}
@@ -442,20 +448,20 @@ export default function Onboarding() {
                   )}
                   
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowAddForm(false)} className="flex-1">Cancel</Button>
-                    <Button onClick={addMetric} className="flex-1" disabled={!newMetric.name.trim()}>Add Metric</Button>
+                    <Button variant="outline" onClick={() => setShowAddForm(false)} className="flex-1">{t('onboarding.metrics.cancel')}</Button>
+                    <Button onClick={addMetric} className="flex-1" disabled={!newMetric.name.trim()}>{t('onboarding.metrics.addMetric')}</Button>
                   </div>
                 </CardContent>
               </Card>
             ) : (
               <Button variant="outline" onClick={() => setShowAddForm(true)} className="w-full border-dashed">
-                <Plus size={16} /> Add Custom Metric
+                <Plus size={16} /> {t('onboarding.metrics.addCustomMetric')}
               </Button>
             )}
 
             {metrics.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-4">
-                Add at least one metric to track daily ☝️
+                {t('onboarding.metrics.addAtLeastOne')} ☝️
               </p>
             )}
           </div>
@@ -464,7 +470,7 @@ export default function Onboarding() {
       case 2: // Regular medications
         return (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Add {childName || 'your child'}'s regular daily medications. Skip if none right now.</p>
+            <p className="text-sm text-muted-foreground">{t('onboarding.medications.addRegularMeds', { name: childName || t('common.yourChild') })}</p>
             {renderMedList(medications, setMedications)}
           </div>
         );
@@ -472,7 +478,7 @@ export default function Onboarding() {
       case 3: // Daily routine
         return (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Add daily tasks like meals, therapy, school, or anything {childName || 'your child'} does every day.</p>
+            <p className="text-sm text-muted-foreground">{t('onboarding.tasks.addDailyTasks', { name: childName || t('common.yourChild') })}</p>
             {renderTaskList(routineTasks, setRoutineTasks)}
           </div>
         );
@@ -481,9 +487,9 @@ export default function Onboarding() {
         return (
           <div className="space-y-4">
             <div className="bg-destructive/10 rounded-xl p-3 text-sm text-destructive font-medium">
-              🔥 These are <strong>extra medications</strong> only used during flares or bad days.
+              🔥 {t('onboarding.flareMeds.extraMedsNotice')}
             </div>
-            <p className="text-sm text-muted-foreground">Add any rescue or as-needed medications prescribed for flare-ups.</p>
+            <p className="text-sm text-muted-foreground">{t('onboarding.flareMeds.addRescueMeds')}</p>
             {renderMedList(flareMeds, setFlareMeds)}
           </div>
         );
@@ -492,9 +498,9 @@ export default function Onboarding() {
         return (
           <div className="space-y-4">
             <div className="bg-destructive/10 rounded-xl p-3 text-sm text-destructive font-medium">
-              🔥 These tasks appear only when {childName || 'your child'} is in a <strong>flare</strong>.
+              🔥 {t('onboarding.flareRoutine.flareTasksNotice', { name: childName || t('common.yourChild') })}
             </div>
-            <p className="text-sm text-muted-foreground">Things like extra rest, school accommodation notes, or modified activities.</p>
+            <p className="text-sm text-muted-foreground">{t('onboarding.flareRoutine.modifiedActivities')}</p>
             {renderTaskList(flareTasks, setFlareTasks)}
           </div>
         );
@@ -506,21 +512,21 @@ export default function Onboarding() {
               <Sparkles className="text-primary" size={36} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">You're all set! 🎉</h2>
+              <h2 className="text-xl font-bold text-foreground">{t('onboarding.complete.title')} 🎉</h2>
               <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                {childName ? `${childName}'s` : 'Your'} tracker is ready. You can always update settings later.
+                {t('onboarding.complete.trackerReady', { name: childName || t('common.yourChild') })}
               </p>
             </div>
             <div className="bg-card rounded-2xl border p-4 text-left space-y-2">
-              <p className="text-sm font-semibold">📊 Summary</p>
-              <p className="text-xs text-muted-foreground">Tracking {metrics.length} metrics</p>
+              <p className="text-sm font-semibold">📊 {t('onboarding.complete.summary')}</p>
+              <p className="text-xs text-muted-foreground">{t('onboarding.complete.trackingMetrics', { count: metrics.length })}</p>
               {metrics.map(m => (
-                <p key={m.id} className="text-xs text-muted-foreground">• {m.name} — baseline {m.baseline}{m.unit}</p>
+                <p key={m.id} className="text-xs text-muted-foreground">• {m.name} — {t('log.baseline')} {m.baseline}{m.unit}</p>
               ))}
-              <p className="text-xs text-muted-foreground mt-1">{medications.filter(m => m.name.trim()).length} daily medications</p>
-              <p className="text-xs text-muted-foreground">{routineTasks.filter(t => t.name.trim()).length} daily tasks</p>
-              <p className="text-xs text-muted-foreground">{flareMeds.filter(m => m.name.trim()).length} flare medications</p>
-              <p className="text-xs text-muted-foreground">{flareTasks.filter(t => t.name.trim()).length} flare tasks</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('onboarding.complete.dailyMedications', { count: medications.filter(m => m.name.trim()).length })}</p>
+              <p className="text-xs text-muted-foreground">{t('onboarding.complete.dailyTasks', { count: routineTasks.filter(t => t.name.trim()).length })}</p>
+              <p className="text-xs text-muted-foreground">{t('onboarding.complete.flareMedications', { count: flareMeds.filter(m => m.name.trim()).length })}</p>
+              <p className="text-xs text-muted-foreground">{t('onboarding.complete.flareTasks', { count: flareTasks.filter(t => t.name.trim()).length })}</p>
             </div>
           </div>
         );
@@ -531,7 +537,7 @@ export default function Onboarding() {
     <div className="flex flex-col min-h-screen max-w-lg mx-auto bg-background">
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-lg border-b px-4 py-3.5">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">☀️ Helios Setup</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground">☀️ {t('onboarding.navigation.setup')}</h1>
           <span className="text-sm text-muted-foreground font-semibold">{step + 1} / {STEPS.length}</span>
         </div>
         <div className="w-full h-1.5 bg-secondary rounded-full mt-2 overflow-hidden">
@@ -551,12 +557,12 @@ export default function Onboarding() {
       <div className="fixed bottom-0 left-0 right-0 bg-card/90 backdrop-blur-lg border-t p-4">
         <div className="max-w-lg mx-auto flex gap-3">
           {step > 0 && (
-            <Button variant="outline" onClick={back} className="flex-1"><ChevronLeft size={16} /> Back</Button>
+            <Button variant="outline" onClick={back} className="flex-1"><ChevronLeft size={16} /> {t('onboarding.navigation.back')}</Button>
           )}
           {step < STEPS.length - 1 ? (
-            <Button onClick={next} className="flex-1">Next <ChevronRight size={16} /></Button>
+            <Button onClick={next} className="flex-1">{t('onboarding.navigation.next')} <ChevronRight size={16} /></Button>
           ) : (
-            <Button onClick={finish} className="flex-1">Let's Go! 🚀</Button>
+            <Button onClick={finish} className="flex-1">{t('onboarding.navigation.letsGo')} 🚀</Button>
           )}
         </div>
       </div>

@@ -3,16 +3,18 @@ import { useAppState, MetricValue } from '@/hooks/useAppState';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle2, ArrowRight, Heart } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { useTranslation } from 'react-i18next';
 
 type Screen = 'idle' | 'checkin' | 'result';
 
 export default function LogTab() {
   const { addLog, lastLogTime, mode, setActiveTab, userData } = useAppState();
+  const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>('idle');
   const [metricValues, setMetricValues] = useState<Record<string, number | boolean>>({});
   const [note, setNote] = useState('');
 
-  const childName = userData?.childName || 'your child';
+  const childName = userData?.childName || t('common.yourChild');
   const userMetrics = userData?.metrics || [];
 
   // Helper to get default value for a metric
@@ -67,25 +69,25 @@ export default function LogTab() {
           <Heart size={40} className="text-primary" />
         </div>
         <div className="text-center space-y-2">
-          <p className="text-xl font-bold">Ready for a check-in? 💛</p>
+          <p className="text-xl font-bold">{t('log.readyForCheckIn')} 💛</p>
           <p className="text-sm text-muted-foreground">
             {lastLogTime
-              ? `Last one was ${formatDistanceToNow(lastLogTime, { addSuffix: true })}`
-              : 'This will be your first one!'}
+              ? t('log.lastOneWas', { time: formatDistanceToNow(lastLogTime, { addSuffix: true }) })
+              : t('log.firstCheckIn')}
           </p>
-          {mode === 'normal' && <p className="text-sm text-primary font-medium">Things are looking stable 🌿</p>}
-          {mode === 'flare' && <p className="text-sm text-destructive font-medium">Tracking during a flare 🔥</p>}
+          {mode === 'normal' && <p className="text-sm text-primary font-medium">{t('log.lookingStable')} 🌿</p>}
+          {mode === 'flare' && <p className="text-sm text-destructive font-medium">{t('log.trackingFlare')} 🔥</p>}
         </div>
         {userMetrics.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center px-8">
-            No metrics set up yet. Complete onboarding to add metrics to track!
+            {t('log.noMetricsSetUp')}
           </p>
         ) : (
           <button
             onClick={() => setScreen('checkin')}
             className="bg-primary text-primary-foreground rounded-2xl px-10 py-3.5 font-bold text-base hover:opacity-90 transition-opacity shadow-sm"
           >
-            📝 Let's Go
+            📝 {t('log.letsGo')}
           </button>
         )}
       </div>
@@ -96,9 +98,9 @@ export default function LogTab() {
     return (
       <div className="animate-slide-up space-y-5 pb-4">
         <div className="bg-card rounded-2xl border p-5 shadow-sm">
-          <h2 className="text-base font-bold mb-1">Quick Check-In 💬</h2>
+          <h2 className="text-base font-bold mb-1">{t('log.quickCheckIn')} 💬</h2>
           <p className="text-xs text-muted-foreground mb-5">
-            {userMetrics.length} metrics to track — takes about {Math.max(20, userMetrics.length * 5)} seconds!
+            {t('log.metricsToTrack', { count: userMetrics.length, seconds: Math.max(20, userMetrics.length * 5) })}
           </p>
           <div className="space-y-6">
             {userMetrics.map((metric) => (
@@ -124,8 +126,8 @@ export default function LogTab() {
                       <span className="text-xs text-muted-foreground">{metric.max}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {metric.higherIsWorse ? '↑ Higher = worse' : '↑ Higher = better'}
-                      {metric.hasBaseline && metric.baseline !== undefined && ` • Baseline: ${metric.baseline}${metric.unit}`}
+                      {metric.higherIsWorse ? `↑ ${t('log.higherWorse')}` : `↑ ${t('log.higherBetter')}`}
+                      {metric.hasBaseline && metric.baseline !== undefined && ` • ${t('log.baseline')}: ${metric.baseline}${metric.unit}`}
                     </p>
                   </>
                 ) : (
@@ -133,7 +135,7 @@ export default function LogTab() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold">{metric.name}</span>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${metric.yesIsGood ? 'text-primary' : 'text-destructive'}`}>
-                        {metric.yesIsGood ? 'Yes = good' : 'Yes = bad'}
+                        {metric.yesIsGood ? t('log.yesIsGood') : t('log.yesIsBad')}
                       </span>
                     </div>
                     <div className="flex gap-2">
@@ -145,7 +147,7 @@ export default function LogTab() {
                             : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                         }`}
                       >
-                        Yes
+                        {t('log.yes')}
                       </button>
                       <button
                         onClick={() => updateMetricValue(metric.name, false)}
@@ -155,7 +157,7 @@ export default function LogTab() {
                             : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                         }`}
                       >
-                        No
+                        {t('log.no')}
                       </button>
                     </div>
                   </>
@@ -166,11 +168,11 @@ export default function LogTab() {
         </div>
 
         <div className="bg-card rounded-2xl border p-5 shadow-sm">
-          <label className="text-sm font-bold block mb-2">Anything else to share? 💭</label>
+          <label className="text-sm font-bold block mb-2">{t('log.anythingElse')} 💭</label>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="How are you feeling today?"
+            placeholder={t('log.howAreYouFeeling')}
             className="w-full bg-secondary/50 rounded-xl p-3 text-sm resize-none h-20 border-0 focus:ring-2 focus:ring-primary/20 outline-none"
           />
         </div>
@@ -179,7 +181,7 @@ export default function LogTab() {
           onClick={handleSave}
           className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-base hover:opacity-90 transition-opacity shadow-sm"
         >
-          ✅ Save Check-In
+          ✅ {t('log.saveCheckIn')}
         </button>
       </div>
     );
@@ -192,9 +194,9 @@ export default function LogTab() {
         <CheckCircle2 size={40} className="text-primary" />
       </div>
       <div className="text-center space-y-2">
-        <p className="text-xl font-bold text-primary">Check-in saved! 🌟</p>
+        <p className="text-xl font-bold text-primary">{t('log.checkInSaved')} 🌟</p>
         <p className="text-sm text-muted-foreground">
-          Great job keeping track of how {childName} is doing.
+          {t('log.greatJob', { name: childName })}
         </p>
       </div>
       <div className="flex gap-3">
@@ -202,13 +204,13 @@ export default function LogTab() {
           onClick={() => { setActiveTab('routine'); resetAndNew(); }}
           className="bg-secondary text-foreground px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5"
         >
-          Go to My Day <ArrowRight size={14} />
+          {t('log.goToMyDay')} <ArrowRight size={14} />
         </button>
         <button
           onClick={resetAndNew}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium px-4 py-2.5"
         >
-          Done 👋
+          {t('log.done')} 👋
         </button>
       </div>
     </div>

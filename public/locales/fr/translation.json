@@ -1,0 +1,193 @@
+{
+  "app": {
+    "name": "Helios",
+    "tagline": "Cet outil aide au suivi et à la communication. Il ne fournit pas de conseils médicaux."
+  },
+  "modes": {
+    "normal": "En Forme",
+    "flare": "Mode Crise"
+  },
+  "tabs": {
+    "myDay": "Ma Journée",
+    "checkIn": "Bilan",
+    "progress": "Progrès"
+  },
+  "routine": {
+    "feelingGood": "En Forme",
+    "switchToFlare": "Passer en Mode Crise",
+    "havingGoodDay": "{{name}} passe une bonne journée !",
+    "flareMode": "Mode Crise",
+    "backToNormal": "Retour à la Normal",
+    "extraCareTasks": "Les tâches et médicaments supplémentaires sont affichés.",
+    "timeToCheckIn": "C'est l'Heure du Bilan !",
+    "letsSeHow": "Voyons comment va {{name}} maintenant.",
+    "checkInNow": "Faire le Bilan",
+    "youreAllCaughtUp": "Vous Êtes à Jour !",
+    "allGoodWithLogging": "Tout va bien avec le suivi. Prochain bilan dans 2 heures.",
+    "todaysToDo": "À Faire Aujourd'hui",
+    "allDoneForToday": "Tout est fait pour aujourd'hui — super !",
+    "noTasksNormal": "Aucune tâche ou médicament configuré. Complétez la configuration pour en ajouter !",
+    "noTasksFlare": "Aucune tâche ou médicament de crise configuré. Ajoutez-les dans les paramètres.",
+    "done": "Fait"
+  },
+  "categories": {
+    "medications": "Médicaments",
+    "care": "Soins et Thérapie",
+    "nutrition": "Alimentation et Hydratation",
+    "school": "École et Travail",
+    "admin": "Rendez-vous"
+  },
+  "log": {
+    "readyForCheckIn": "Prêt pour un bilan ?",
+    "lastOneWas": "Le dernier était {{time}}",
+    "firstCheckIn": "Ce sera votre premier !",
+    "lookingStable": "Les choses semblent stables",
+    "trackingFlare": "Suivi pendant une crise",
+    "noMetricsSetUp": "Aucune métrique configurée. Complétez la configuration pour ajouter des métriques à suivre !",
+    "letsGo": "Allons-y",
+    "quickCheckIn": "Bilan Rapide",
+    "metricsToTrack": "{{count}} métriques à suivre — environ {{seconds}} secondes !",
+    "higherWorse": "Plus élevé = pire",
+    "higherBetter": "Plus élevé = mieux",
+    "baseline": "Référence",
+    "yesIsGood": "Oui = bon",
+    "yesIsBad": "Oui = mauvais",
+    "yes": "Oui",
+    "no": "Non",
+    "anythingElse": "Autre chose à partager ?",
+    "howAreYouFeeling": "Comment vous sentez-vous aujourd'hui ?",
+    "saveCheckIn": "Enregistrer le Bilan",
+    "checkInSaved": "Bilan enregistré !",
+    "greatJob": "Bravo pour le suivi de {{name}}.",
+    "goToMyDay": "Aller à Ma Journée",
+    "done": "Terminé"
+  },
+  "summary": {
+    "selectMetric": "Sélectionner une Métrique",
+    "trend": "Tendance de {{metric}}",
+    "noDataAvailable": "Aucune donnée disponible pour {{metric}}",
+    "yesNo": "Oui / Non",
+    "shareWithCareTeam": "Partager avec l'Équipe Médicale",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "generatingSummary": "Génération du résumé…",
+    "clinicianSummary": "Résumé Clinique",
+    "noUserData": "Aucune donnée utilisateur disponible."
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Bienvenue",
+      "letsSetUp": "Configurons votre suivi quotidien",
+      "metricsToTrack": "Métriques à Suivre",
+      "addThingsToMonitor": "Ajoutez les choses que vous voulez surveiller quotidiennement",
+      "medications": "Médicaments",
+      "regularDailyMeds": "Vos médicaments quotidiens réguliers",
+      "dailyRoutine": "Routine Quotidienne",
+      "tasksEveryDay": "Tâches que vous faites chaque jour",
+      "flareMedications": "Médicaments de Crise",
+      "extraMeds": "Médicaments supplémentaires pour les moments difficiles",
+      "flareRoutine": "Routine de Crise",
+      "whatChangesDuringFlare": "Qu'est-ce qui change pendant une crise ?",
+      "allSet": "Tout Est Prêt !",
+      "readyToGo": "Vous êtes prêt à commencer"
+    },
+    "welcome": {
+      "title": "Bienvenue sur Helios",
+      "description": "Nous vous aiderons à suivre la santé quotidienne, gérer les routines et détecter les crises tôt. Configurons tout en quelques étapes !",
+      "childName": "Nom de l'Enfant",
+      "childNamePlaceholder": "ex. Emma",
+      "condition": "Condition / Diagnostic",
+      "conditionPlaceholder": "ex. AJI, Crohn, Lupus",
+      "caregiverName": "Votre Nom (Aidant)",
+      "caregiverNamePlaceholder": "ex. Sarah"
+    },
+    "metrics": {
+      "addMetricsDescription": "Ajoutez les métriques que vous voulez suivre quotidiennement. Choisissez échelle (0-10) ou oui/non.",
+      "quickAddSuggestions": "Suggestions rapides",
+      "scale": "Échelle (0-10)",
+      "yesNo": "Oui/Non",
+      "baselineNormalDay": "Référence (jour normal)",
+      "higherWorse": "Plus élevé = pire",
+      "higherBetter": "Plus élevé = mieux",
+      "yesGood": "Oui = bon",
+      "yesBad": "Oui = mauvais",
+      "newMetric": "Nouvelle Métrique",
+      "metricNamePlaceholder": "Nom de métrique (ex. Raideur, Nausée, Pas)",
+      "unit": "Unité",
+      "unitPlaceholder": "/10, hrs, verres",
+      "min": "Min",
+      "max": "Max",
+      "higherValueWorse": "Valeur plus élevée = pire (ex. Douleur)",
+      "higherValueBetter": "Valeur plus élevée = mieux (ex. Énergie)",
+      "tapToToggle": "Appuyez pour changer",
+      "baselineEnabled": "Référence activée",
+      "addBaselineOptional": "Ajouter valeur de référence (optionnel)",
+      "baselineValue": "Valeur de référence",
+      "cancel": "Annuler",
+      "addMetric": "Ajouter Métrique",
+      "addCustomMetric": "Ajouter Métrique Personnalisée",
+      "addAtLeastOne": "Ajoutez au moins une métrique à suivre quotidiennement"
+    },
+    "medications": {
+      "addRegularMeds": "Ajoutez les médicaments quotidiens réguliers de {{name}}. Passez si aucun pour l'instant.",
+      "medication": "Médicament",
+      "medicationName": "Nom du médicament",
+      "dose": "Dose (ex. 5mg)",
+      "morning": "Matin",
+      "afternoon": "Après-midi",
+      "evening": "Soir",
+      "bedtime": "Coucher",
+      "asNeeded": "Au besoin",
+      "addMedication": "Ajouter Médicament"
+    },
+    "tasks": {
+      "addDailyTasks": "Ajoutez les tâches quotidiennes comme repas, thérapie, école, ou tout ce que {{name}} fait chaque jour.",
+      "task": "Tâche",
+      "taskNamePlaceholder": "Nom de tâche (ex. Physiothérapie)",
+      "timePlaceholder": "Heure (ex. 8h)",
+      "addTask": "Ajouter Tâche"
+    },
+    "flareMeds": {
+      "extraMedsNotice": "Ce sont des médicaments supplémentaires utilisés seulement pendant les crises ou jours difficiles.",
+      "addRescueMeds": "Ajoutez tout médicament de secours ou au besoin prescrit pour les crises."
+    },
+    "flareRoutine": {
+      "flareTasksNotice": "Ces tâches apparaissent seulement quand {{name}} est en crise.",
+      "modifiedActivities": "Comme repos supplémentaire, notes d'aménagement scolaire, ou activités modifiées."
+    },
+    "complete": {
+      "title": "Tout est prêt !",
+      "trackerReady": "Le suivi de {{name}} est prêt. Vous pouvez toujours mettre à jour les paramètres plus tard.",
+      "summary": "Résumé",
+      "trackingMetrics": "Suivi de {{count}} métriques",
+      "dailyMedications": "{{count}} médicaments quotidiens",
+      "dailyTasks": "{{count}} tâches quotidiennes",
+      "flareMedications": "{{count}} médicaments de crise",
+      "flareTasks": "{{count}} tâches de crise"
+    },
+    "navigation": {
+      "back": "Retour",
+      "next": "Suivant",
+      "letsGo": "C'est Parti !",
+      "setup": "Configuration Helios"
+    }
+  },
+  "suggestedMetrics": {
+    "sleepQuality": "Qualité du Sommeil",
+    "painLevel": "Niveau de Douleur",
+    "energy": "Énergie",
+    "foodIntake": "Apport Alimentaire",
+    "mood": "Humeur",
+    "nausea": "Nausée",
+    "exercised": "Exercice",
+    "headache": "Mal de Tête"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Oups ! Page non trouvée",
+    "returnHome": "Retour à l'Accueil"
+  },
+  "common": {
+    "yourChild": "votre enfant"
+  }
+}

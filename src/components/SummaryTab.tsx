@@ -13,9 +13,11 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function SummaryTab() {
   const { logs, userData } = useAppState();
+  const { t } = useTranslation();
   const [selectedMetricName, setSelectedMetricName] = useState<string>('');
   const [showExport, setShowExport] = useState(false);
   const [summary, setSummary] = useState<string>('');
@@ -130,7 +132,7 @@ export default function SummaryTab() {
     if (!activeMetricName || chartData.length === 0) {
       return (
         <div className="h-64 flex items-center justify-center text-muted-foreground">
-          <p className="text-sm">No data available for {activeMetricName}</p>
+          <p className="text-sm">{t('summary.noDataAvailable', { metric: activeMetricName })}</p>
         </div>
       );
     }
@@ -222,7 +224,7 @@ export default function SummaryTab() {
       {/* Metric Selection */}
       {metrics.length > 0 && (
         <div className="bg-card rounded-2xl border p-4 shadow-sm">
-          <h3 className="text-sm font-bold mb-3">📊 Select Metric</h3>
+          <h3 className="text-sm font-bold mb-3">📊 {t('summary.selectMetric')}</h3>
           <div className="flex flex-wrap gap-2">
             {metrics.map(metric => (
               <button
@@ -245,7 +247,7 @@ export default function SummaryTab() {
       {/* Chart */}
       <div className="bg-card rounded-2xl border p-4 shadow-sm">
         <h3 className="text-sm font-bold mb-4">
-          📈 {activeMetricName} Trend
+          📈 {t('summary.trend', { metric: activeMetricName })}
         </h3>
         <div className="h-64">{renderChart()}</div>
       </div>
@@ -260,11 +262,11 @@ export default function SummaryTab() {
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-primary" />
             <span className="text-sm font-bold">
-              Share with Care Team
+              {t('summary.shareWithCareTeam')}
             </span>
           </div>
           <span className="text-xs text-muted-foreground font-medium">
-            {showExport ? 'Hide' : 'Show'}
+            {showExport ? t('summary.hide') : t('summary.show')}
           </span>
         </button>
 
@@ -273,14 +275,14 @@ export default function SummaryTab() {
             {llmLoading ? (
               <div className="pt-3 flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-t-transparent border-primary rounded-full animate-spin" />
-                <p className="text-xs text-muted-foreground">Generating summary…</p>
+                <p className="text-xs text-muted-foreground">{t('summary.generatingSummary')}</p>
               </div>
             ) : (
               <div className="mt-3">
                 <div className="bg-card rounded-xl p-4 shadow-sm max-h-64 overflow-auto">
-                  <h4 className="text-sm font-semibold mb-2">Clinician Summary</h4>
+                  <h4 className="text-sm font-semibold mb-2">{t('summary.clinicianSummary')}</h4>
                   <div className="font-sans text-base leading-7 text-foreground/90 tracking-normal whitespace-pre-wrap">
-                    {summary || 'No user data available.'}
+                    {summary || t('summary.noUserData')}
                   </div>
                 </div>
               </div>
