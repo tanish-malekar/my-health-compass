@@ -19,19 +19,25 @@ const STEPS = [
 interface MetricEntry {
   id: string;
   name: string;
+  metricType: 'scale' | 'boolean';
   unit: string;
   min: number;
   max: number;
   baseline: number;
+  baselineBoolean: boolean;
   higherIsWorse: boolean;
+  yesIsGood: boolean;
 }
 
 const SUGGESTED_METRICS: Omit<MetricEntry, 'id'>[] = [
-  { name: 'Sleep Quality', unit: '/10', min: 0, max: 10, baseline: 7, higherIsWorse: false },
-  { name: 'Pain Level', unit: '/10', min: 0, max: 10, baseline: 2, higherIsWorse: true },
-  { name: 'Energy', unit: '/10', min: 0, max: 10, baseline: 7, higherIsWorse: false },
-  { name: 'Food Intake', unit: '/10', min: 0, max: 10, baseline: 7, higherIsWorse: false },
-  { name: 'Mood', unit: '/10', min: 0, max: 10, baseline: 7, higherIsWorse: false },
+  { name: 'Sleep Quality', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Pain Level', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 2, baselineBoolean: true, higherIsWorse: true, yesIsGood: true },
+  { name: 'Energy', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Food Intake', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Mood', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 7, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Nausea', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 0, baselineBoolean: false, higherIsWorse: true, yesIsGood: false },
+  { name: 'Exercised', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 1, baselineBoolean: true, higherIsWorse: false, yesIsGood: true },
+  { name: 'Headache', metricType: 'boolean', unit: '', min: 0, max: 1, baseline: 0, baselineBoolean: false, higherIsWorse: true, yesIsGood: false },
 ];
 
 const ROUTINE_CATEGORIES = [
@@ -57,7 +63,7 @@ export default function Onboarding() {
   // Step 1: Dynamic metrics
   const [metrics, setMetrics] = useState<MetricEntry[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newMetric, setNewMetric] = useState<Omit<MetricEntry, 'id'>>({ name: '', unit: '/10', min: 0, max: 10, baseline: 5, higherIsWorse: false });
+  const [newMetric, setNewMetric] = useState<Omit<MetricEntry, 'id'>>({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, higherIsWorse: false, yesIsGood: true });
 
   // Step 2: Medications
   const [medications, setMedications] = useState<MedEntry[]>([{ id: '1', name: '', dose: '', time: 'Morning' }]);
@@ -86,6 +92,7 @@ export default function Onboarding() {
     };
 
     try {
+      console.log('Saving onboarding data...', onboardingData);
       const response = await fetch('http://localhost:3001/api/users', {
         method: 'POST',
         headers: {
@@ -113,7 +120,7 @@ export default function Onboarding() {
   const addMetric = () => {
     if (!newMetric.name.trim()) return;
     setMetrics([...metrics, { ...newMetric, id: Date.now().toString() }]);
-    setNewMetric({ name: '', unit: '/10', min: 0, max: 10, baseline: 5, higherIsWorse: false });
+    setNewMetric({ name: '', metricType: 'scale', unit: '/10', min: 0, max: 10, baseline: 5, baselineBoolean: true, higherIsWorse: false, yesIsGood: true });
     setShowAddForm(false);
   };
 
@@ -126,6 +133,10 @@ export default function Onboarding() {
 
   const updateMetricBaseline = (id: string, baseline: number) => {
     setMetrics(metrics.map(m => m.id === id ? { ...m, baseline } : m));
+  };
+
+  const updateMetricBaselineBoolean = (id: string, baselineBoolean: boolean) => {
+    setMetrics(metrics.map(m => m.id === id ? { ...m, baselineBoolean } : m));
   };
 
   // Shared helpers for med/task lists
@@ -233,7 +244,7 @@ export default function Onboarding() {
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Add metrics you want to track daily. Each metric has a name, scale, and baseline value for a normal day.
+              Add metrics you want to track daily. Choose scale (0-10) or yes/no metrics.
             </p>
 
             {/* Suggested quick-adds */}
@@ -245,9 +256,13 @@ export default function Onboarding() {
                     <button
                       key={s.name}
                       onClick={() => addSuggested(s)}
-                      className="text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full px-3 py-1.5 hover:bg-primary/20 transition-colors"
+                      className={`text-xs font-semibold border rounded-full px-3 py-1.5 hover:opacity-80 transition-colors ${
+                        s.metricType === 'boolean' 
+                          ? 'bg-secondary/50 text-foreground border-border' 
+                          : 'bg-primary/10 text-primary border-primary/20'
+                      }`}
                     >
-                      + {s.name}
+                      + {s.name} {s.metricType === 'boolean' ? '(Y/N)' : ''}
                     </button>
                   ))}
                 </div>
@@ -263,24 +278,51 @@ export default function Onboarding() {
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-sm font-bold">{m.name}</span>
-                          <span className="text-xs text-muted-foreground ml-2">({m.min}–{m.max} {m.unit})</span>
+                          {m.metricType === 'scale' ? (
+                            <span className="text-xs text-muted-foreground ml-2">({m.min}–{m.max} {m.unit})</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground ml-2">(Yes/No)</span>
+                          )}
                         </div>
                         <button onClick={() => removeMetric(m.id)} className="text-muted-foreground hover:text-destructive transition-colors"><X size={16} /></button>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground px-1">{m.higherIsWorse ? '✓ Higher = worse' : '✓ Higher = better'}</span>
+                        {m.metricType === 'scale' ? (
+                          <span className="text-xs text-muted-foreground px-1">{m.higherIsWorse ? '✓ Higher = worse' : '✓ Higher = better'}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground px-1">{m.yesIsGood ? '✓ Yes = good' : '✓ Yes = bad'}</span>
+                        )}
                       </div>
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
-                          <span className="text-sm font-bold text-primary">{m.baseline}{m.unit}</span>
+                      {m.metricType === 'scale' ? (
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
+                            <span className="text-sm font-bold text-primary">{m.baseline}{m.unit}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground w-6">{m.min}</span>
+                            <Slider value={[m.baseline]} min={m.min} max={m.max} step={1} onValueChange={([v]) => updateMetricBaseline(m.id, v)} className="flex-1" />
+                            <span className="text-xs text-muted-foreground w-6">{m.max}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-6">{m.min}</span>
-                          <Slider value={[m.baseline]} min={m.min} max={m.max} step={1} onValueChange={([v]) => updateMetricBaseline(m.id, v)} className="flex-1" />
-                          <span className="text-xs text-muted-foreground w-6">{m.max}</span>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
+                            <span className="text-sm font-bold text-primary">{m.baselineBoolean ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => updateMetricBaselineBoolean(m.id, true)}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${m.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                            >Yes</button>
+                            <button
+                              onClick={() => updateMetricBaselineBoolean(m.id, false)}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!m.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                            >No</button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -293,36 +335,82 @@ export default function Onboarding() {
                 <CardContent className="p-4 space-y-3">
                   <p className="text-sm font-semibold">New Metric</p>
                   <Input placeholder="Metric name (e.g. Stiffness, Nausea, Steps)" value={newMetric.name} onChange={e => setNewMetric({ ...newMetric, name: e.target.value })} className="bg-background" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Unit</label>
-                      <Input placeholder="/10, hrs, cups" value={newMetric.unit} onChange={e => setNewMetric({ ...newMetric, unit: e.target.value })} className="bg-background" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Min</label>
-                      <Input type="number" value={newMetric.min} onChange={e => setNewMetric({ ...newMetric, min: Number(e.target.value) })} className="bg-background" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Max</label>
-                      <Input type="number" value={newMetric.max} onChange={e => setNewMetric({ ...newMetric, max: Number(e.target.value) })} className="bg-background" />
-                    </div>
+                  
+                  {/* Metric Type Selector */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setNewMetric({ ...newMetric, metricType: 'scale' })}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.metricType === 'scale' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                    >📊 Scale (0-10)</button>
+                    <button
+                      onClick={() => setNewMetric({ ...newMetric, metricType: 'boolean' })}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.metricType === 'boolean' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                    >✓ Yes/No</button>
                   </div>
-                  <button
-                    onClick={() => setNewMetric({ ...newMetric, higherIsWorse: !newMetric.higherIsWorse })}
-                    className={`w-full text-left text-sm p-3 rounded-xl border transition-all ${
-                      newMetric.higherIsWorse ? 'bg-destructive/10 border-destructive/30' : 'bg-primary/10 border-primary/30'
-                    }`}
-                  >
-                    {newMetric.higherIsWorse ? '📈 Higher value = worse (e.g. Pain)' : '📈 Higher value = better (e.g. Energy)'}
-                    <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
-                  </button>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs font-semibold text-muted-foreground">Baseline value</label>
-                      <span className="text-sm font-bold text-primary">{newMetric.baseline}{newMetric.unit}</span>
-                    </div>
-                    <Slider value={[newMetric.baseline]} min={newMetric.min} max={newMetric.max} step={1} onValueChange={([v]) => setNewMetric({ ...newMetric, baseline: v })} />
-                  </div>
+
+                  {newMetric.metricType === 'scale' ? (
+                    <>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Unit</label>
+                          <Input placeholder="/10, hrs, cups" value={newMetric.unit} onChange={e => setNewMetric({ ...newMetric, unit: e.target.value })} className="bg-background" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Min</label>
+                          <Input type="number" value={newMetric.min} onChange={e => setNewMetric({ ...newMetric, min: Number(e.target.value) })} className="bg-background" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1 block">Max</label>
+                          <Input type="number" value={newMetric.max} onChange={e => setNewMetric({ ...newMetric, max: Number(e.target.value) })} className="bg-background" />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setNewMetric({ ...newMetric, higherIsWorse: !newMetric.higherIsWorse })}
+                        className={`w-full text-left text-sm p-3 rounded-xl border transition-all ${
+                          newMetric.higherIsWorse ? 'bg-destructive/10 border-destructive/30' : 'bg-primary/10 border-primary/30'
+                        }`}
+                      >
+                        {newMetric.higherIsWorse ? '📈 Higher value = worse (e.g. Pain)' : '📈 Higher value = better (e.g. Energy)'}
+                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
+                      </button>
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-xs font-semibold text-muted-foreground">Baseline value</label>
+                          <span className="text-sm font-bold text-primary">{newMetric.baseline}{newMetric.unit}</span>
+                        </div>
+                        <Slider value={[newMetric.baseline]} min={newMetric.min} max={newMetric.max} step={1} onValueChange={([v]) => setNewMetric({ ...newMetric, baseline: v })} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setNewMetric({ ...newMetric, yesIsGood: !newMetric.yesIsGood })}
+                        className={`w-full text-left text-sm p-3 rounded-xl border transition-all ${
+                          newMetric.yesIsGood ? 'bg-primary/10 border-primary/30' : 'bg-destructive/10 border-destructive/30'
+                        }`}
+                      >
+                        {newMetric.yesIsGood ? '✓ Yes = good (e.g. Exercised)' : '✗ Yes = bad (e.g. Had headache)'}
+                        <span className="text-xs text-muted-foreground block mt-0.5">Tap to toggle</span>
+                      </button>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="text-xs font-semibold text-muted-foreground">Baseline (normal day)</label>
+                          <span className="text-sm font-bold text-primary">{newMetric.baselineBoolean ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setNewMetric({ ...newMetric, baselineBoolean: true })}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                          >Yes</button>
+                          <button
+                            onClick={() => setNewMetric({ ...newMetric, baselineBoolean: false })}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${!newMetric.baselineBoolean ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+                          >No</button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setShowAddForm(false)} className="flex-1">Cancel</Button>
                     <Button onClick={addMetric} className="flex-1" disabled={!newMetric.name.trim()}>Add Metric</Button>

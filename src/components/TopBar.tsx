@@ -1,10 +1,9 @@
 import { useAppState, Mode } from '@/hooks/useAppState';
 import { Settings, Share2 } from 'lucide-react';
 
-const modeConfig: Record<Mode, { label: string; emoji: string; class: string; dotClass: string }> = {
-  green: { label: 'Feeling Good', emoji: '🌿', class: 'mode-green', dotClass: 'mode-green-dot' },
-  yellow: { label: 'Keep Watch', emoji: '🌤️', class: 'mode-yellow', dotClass: 'mode-yellow-dot' },
-  red: { label: 'Need Support', emoji: '❤️‍🩹', class: 'mode-red', dotClass: 'mode-red-dot' },
+const modeConfig: Record<Mode, { label: string; emoji: string; class: string }> = {
+  normal: { label: 'Feeling Good', emoji: '🌿', class: 'bg-primary/10 text-primary' },
+  flare: { label: 'Flare Mode', emoji: '🔥', class: 'bg-destructive/10 text-destructive' },
 };
 
 export default function TopBar() {

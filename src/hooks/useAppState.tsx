@@ -1,20 +1,31 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 
-export type Mode = 'green' | 'yellow' | 'red';
+export type Mode = 'normal' | 'flare';
+
+export interface MetricValue {
+  name: string;
+  value: number | boolean;
+  metricType: 'scale' | 'boolean';
+}
 
 export interface LogEntry {
-  id: string;
-  timestamp: Date;
-  sleep: number;
-  pain: number;
-  mobility: number;
-  intake: number;
-  mood: number;
-  newSymptom: boolean;
-  unableToEat: boolean;
-  severePain: boolean;
+  _id?: string;
+  time: Date;
+  metrics: MetricValue[];
   note?: string;
-  mode: Mode;
+}
+
+export interface UserMetric {
+  _id?: string;
+  name: string;
+  metricType: 'scale' | 'boolean';
+  unit: string;
+  min: number;
+  max: number;
+  baseline: number;
+  baselineBoolean: boolean;
+  higherIsWorse: boolean;
+  yesIsGood: boolean;
 }
 
 export interface RoutineTask {
@@ -34,105 +45,241 @@ export interface Baseline {
   mood: number;
 }
 
+export interface UserData {
+  _id?: string;
+  childName: string;
+  condition?: string;
+  caregiverName?: string;
+  mode: Mode;
+  isCheckinNow: boolean;
+  lastCheckinTime?: Date;
+  metrics: UserMetric[];
+  medications: Array<{ _id?: string; name: string; dose: string; time: string }>;
+  routineTasks: Array<{ _id?: string; name: string; category: string; time: string }>;
+  flareMeds: Array<{ _id?: string; name: string; dose: string; time: string }>;
+  flareTasks: Array<{ _id?: string; name: string; category: string; time: string }>;
+  logs: LogEntry[];
+}
+
 interface AppState {
   mode: Mode;
   setMode: (mode: Mode) => void;
+  toggleMode: () => void;
+  isCheckinNow: boolean;
+  setIsCheckinNow: (value: boolean) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   baseline: Baseline;
   logs: LogEntry[];
-  addLog: (entry: Omit<LogEntry, 'id' | 'timestamp' | 'mode'>) => void;
+  addLog: (metrics: MetricValue[], note?: string) => Promise<void>;
   tasks: RoutineTask[];
   toggleTask: (id: string) => void;
   lastLogTime: Date | null;
-  detectMode: (entry: Omit<LogEntry, 'id' | 'timestamp' | 'mode'>) => Mode;
+  userData: UserData | null;
+  loadUserData: () => Promise<void>;
+  completedTaskIds: Set<string>;
 }
 
 const defaultBaseline: Baseline = { sleep: 7, pain: 2, mobility: 7, intake: 7, mood: 7 };
 
-const defaultTasks: RoutineTask[] = [
-  { id: '1', name: 'Morning medication', category: 'medications', timeWindow: '7–8 AM', completed: false },
-  { id: '2', name: 'Evening medication', category: 'medications', timeWindow: '7–8 PM', completed: false },
-  { id: '3', name: 'Physical therapy exercises', category: 'care', timeWindow: '10–11 AM', completed: false },
-  { id: '4', name: 'Breakfast', category: 'nutrition', timeWindow: '8–9 AM', completed: false },
-  { id: '5', name: 'Lunch', category: 'nutrition', timeWindow: '12–1 PM', completed: false },
-  { id: '6', name: 'Dinner', category: 'nutrition', timeWindow: '6–7 PM', completed: false },
-  { id: '7', name: 'Hydration check (8 cups)', category: 'nutrition', timeWindow: 'Throughout day', completed: false },
-  { id: '8', name: 'School attendance', category: 'school', timeWindow: '8 AM–3 PM', completed: false },
-  { id: '9', name: 'Homework', category: 'school', timeWindow: '4–5 PM', completed: false },
-  // Flare-only
-  { id: 'f1', name: 'Flare medication (as prescribed)', category: 'medications', timeWindow: 'As needed', completed: false, isFlareOnly: true },
-  { id: 'f2', name: 'Rest period', category: 'care', timeWindow: 'As needed', completed: false, isFlareOnly: true },
-  { id: 'f3', name: 'Send school accommodation note', category: 'admin', timeWindow: 'Morning', completed: false, isFlareOnly: true },
-];
-
-// Generate sample history
-function generateSampleLogs(): LogEntry[] {
-  const logs: LogEntry[] = [];
-  const now = new Date();
-  for (let i = 30; i >= 1; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    d.setHours(8 + Math.floor(Math.random() * 4), 0, 0, 0);
-    const jitter = () => (Math.random() - 0.5) * 2;
-    const sleep = Math.max(0, Math.min(10, Math.round(7 + jitter())));
-    const pain = Math.max(0, Math.min(10, Math.round(2 + jitter() + (i < 5 ? 2 : 0))));
-    const mobility = Math.max(0, Math.min(10, Math.round(7 + jitter() - (i < 5 ? 2 : 0))));
-    const intake = Math.max(0, Math.min(10, Math.round(7 + jitter())));
-    const mood = Math.max(0, Math.min(10, Math.round(7 + jitter())));
-    logs.push({
-      id: `sample-${i}`,
-      timestamp: d,
-      sleep, pain, mobility, intake, mood,
-      newSymptom: false,
-      unableToEat: false,
-      severePain: pain >= 7,
-      mode: pain >= 6 ? 'red' : pain >= 4 ? 'yellow' : 'green',
+// Build tasks from user data based on mode
+function buildTasksFromUserData(userData: UserData | null, mode: Mode): RoutineTask[] {
+  if (!userData) return [];
+  
+  const tasks: RoutineTask[] = [];
+  
+  if (mode === 'normal') {
+    // Add regular medications
+    userData.medications?.forEach((med, idx) => {
+      tasks.push({
+        id: med._id || `med-${idx}`,
+        name: `${med.name} (${med.dose})`,
+        category: 'medications',
+        timeWindow: med.time,
+        completed: false,
+        isFlareOnly: false,
+      });
+    });
+    
+    // Add routine tasks
+    userData.routineTasks?.forEach((task, idx) => {
+      tasks.push({
+        id: task._id || `task-${idx}`,
+        name: task.name,
+        category: (task.category as RoutineTask['category']) || 'care',
+        timeWindow: task.time,
+        completed: false,
+        isFlareOnly: false,
+      });
+    });
+  } else {
+    // Flare mode - add flare medications
+    userData.flareMeds?.forEach((med, idx) => {
+      tasks.push({
+        id: med._id || `flare-med-${idx}`,
+        name: `${med.name} (${med.dose})`,
+        category: 'medications',
+        timeWindow: med.time,
+        completed: false,
+        isFlareOnly: true,
+      });
+    });
+    
+    // Add flare tasks
+    userData.flareTasks?.forEach((task, idx) => {
+      tasks.push({
+        id: task._id || `flare-task-${idx}`,
+        name: task.name,
+        category: (task.category as RoutineTask['category']) || 'care',
+        timeWindow: task.time,
+        completed: false,
+        isFlareOnly: true,
+      });
     });
   }
-  return logs;
+  
+  return tasks;
 }
 
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>('green');
+  const [mode, setModeState] = useState<Mode>('normal');
+  const [isCheckinNow, setIsCheckinNowState] = useState(false);
   const [activeTab, setActiveTab] = useState('routine');
   const [baseline] = useState<Baseline>(defaultBaseline);
-  const [logs, setLogs] = useState<LogEntry[]>(generateSampleLogs());
-  const [tasks, setTasks] = useState<RoutineTask[]>(defaultTasks);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
 
-  const lastLogTime = logs.length > 0 ? logs[logs.length - 1].timestamp : null;
+  const lastLogTime = logs.length > 0 ? new Date(logs[logs.length - 1].time) : null;
 
-  const detectMode = useCallback((entry: Omit<LogEntry, 'id' | 'timestamp' | 'mode'>): Mode => {
-    if (entry.severePain || entry.unableToEat || entry.newSymptom) return 'red';
-    const painDelta = entry.pain - baseline.pain;
-    const sleepDelta = baseline.sleep - entry.sleep;
-    const mobilityDelta = baseline.mobility - entry.mobility;
-    const score = painDelta * 2 + sleepDelta + mobilityDelta;
-    if (score >= 6) return 'red';
-    if (score >= 3) return 'yellow';
-    return 'green';
-  }, [baseline]);
+  // Build tasks dynamically from userData and mode
+  const tasks = React.useMemo(() => {
+    const builtTasks = buildTasksFromUserData(userData, mode);
+    // Apply completed status from completedTaskIds
+    return builtTasks.map(t => ({
+      ...t,
+      completed: completedTaskIds.has(t.id),
+    }));
+  }, [userData, mode, completedTaskIds]);
 
-  const addLog = useCallback((entry: Omit<LogEntry, 'id' | 'timestamp' | 'mode'>) => {
-    const detectedMode = detectMode(entry);
-    const newEntry: LogEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      mode: detectedMode,
-    };
-    setLogs(prev => [...prev, newEntry]);
-    setMode(detectedMode);
-  }, [detectMode]);
+  const loadUserData = useCallback(async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/users/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserData(data);
+        setModeState(data.mode || 'normal');
+        setIsCheckinNowState(data.isCheckinNow || false);
+        // Load logs from user data
+        if (data.logs && Array.isArray(data.logs)) {
+          setLogs(data.logs);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
+
+  const setMode = useCallback(async (newMode: Mode) => {
+    setModeState(newMode);
+    // Reset completed tasks when switching modes
+    setCompletedTaskIds(new Set());
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      try {
+        await fetch(`http://localhost:3001/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: newMode }),
+        });
+      } catch (error) {
+        console.error('Error updating mode:', error);
+      }
+    }
+  }, []);
+
+  const toggleMode = useCallback(() => {
+    const newMode = mode === 'normal' ? 'flare' : 'normal';
+    setMode(newMode);
+  }, [mode, setMode]);
+
+  const setIsCheckinNow = useCallback(async (value: boolean) => {
+    setIsCheckinNowState(value);
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      try {
+        await fetch(`http://localhost:3001/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isCheckinNow: value, lastCheckinTime: value ? undefined : new Date() }),
+        });
+      } catch (error) {
+        console.error('Error updating checkin status:', error);
+      }
+    }
+  }, []);
+
+  const addLog = useCallback(async (metrics: MetricValue[], note?: string) => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/users/${userId}/logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metrics, note }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(prev => [...prev, data.log]);
+        setIsCheckinNowState(false);
+      }
+    } catch (error) {
+      console.error('Error adding log:', error);
+    }
+  }, []);
 
   const toggleTask = useCallback((id: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    setCompletedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }, []);
 
   return (
-    <AppContext.Provider value={{ mode, setMode, activeTab, setActiveTab, baseline, logs, addLog, tasks, toggleTask, lastLogTime, detectMode }}>
+    <AppContext.Provider value={{ 
+      mode, 
+      setMode, 
+      toggleMode,
+      isCheckinNow, 
+      setIsCheckinNow, 
+      activeTab, 
+      setActiveTab, 
+      baseline, 
+      logs, 
+      addLog, 
+      tasks, 
+      toggleTask, 
+      lastLogTime,
+      userData,
+      loadUserData,
+      completedTaskIds
+    }}>
       {children}
     </AppContext.Provider>
   );

@@ -1,41 +1,62 @@
-import { useState } from 'react';
-import { useAppState } from '@/hooks/useAppState';
+import { useState, useEffect } from 'react';
+import { useAppState, MetricValue } from '@/hooks/useAppState';
 import { formatDistanceToNow } from 'date-fns';
-import { Clock, AlertTriangle, CheckCircle2, ArrowRight, Heart } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Heart } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
 type Screen = 'idle' | 'checkin' | 'result';
 
-const sliderLabels: { key: string; label: string; emoji: string }[] = [
-  { key: 'sleep', label: 'How did you sleep?', emoji: '😴' },
-  { key: 'pain', label: 'How\'s your pain?', emoji: '🩹' },
-  { key: 'mobility', label: 'Energy & movement', emoji: '🏃' },
-  { key: 'intake', label: 'Eating & drinking', emoji: '🥤' },
-  { key: 'mood', label: 'How\'s your mood?', emoji: '😊' },
-];
-
 export default function LogTab() {
-  const { addLog, lastLogTime, mode, logs, baseline, detectMode, setActiveTab } = useAppState();
+  const { addLog, lastLogTime, mode, setActiveTab, userData } = useAppState();
   const [screen, setScreen] = useState<Screen>('idle');
-  const [values, setValues] = useState({ sleep: 7, pain: 2, mobility: 7, intake: 7, mood: 7 });
-  const [flags, setFlags] = useState({ newSymptom: false, unableToEat: false, severePain: false });
+  const [metricValues, setMetricValues] = useState<Record<string, number | boolean>>({});
   const [note, setNote] = useState('');
-  const [lastResult, setLastResult] = useState<{ mode: string; entry: any } | null>(null);
 
-  const handleSave = () => {
-    const entry = { ...values, ...flags, note: note || undefined };
-    const detectedMode = detectMode(entry);
-    addLog(entry);
-    setLastResult({ mode: detectedMode, entry });
+  const childName = userData?.childName || 'your child';
+  const userMetrics = userData?.metrics || [];
+
+  // Initialize metric values when userData loads
+  useEffect(() => {
+    if (userMetrics.length > 0) {
+      const initialValues: Record<string, number | boolean> = {};
+      userMetrics.forEach(metric => {
+        if (metric.metricType === 'boolean') {
+          initialValues[metric.name] = metric.baselineBoolean;
+        } else {
+          initialValues[metric.name] = metric.baseline;
+        }
+      });
+      setMetricValues(initialValues);
+    }
+  }, [userMetrics]);
+
+  const handleSave = async () => {
+    const metrics: MetricValue[] = userMetrics.map(metric => ({
+      name: metric.name,
+      value: metricValues[metric.name] ?? (metric.metricType === 'boolean' ? metric.baselineBoolean : metric.baseline),
+      metricType: metric.metricType,
+    }));
+
+    await addLog(metrics, note || undefined);
     setScreen('result');
   };
 
   const resetAndNew = () => {
-    setValues({ sleep: 7, pain: 2, mobility: 7, intake: 7, mood: 7 });
-    setFlags({ newSymptom: false, unableToEat: false, severePain: false });
+    const initialValues: Record<string, number | boolean> = {};
+    userMetrics.forEach(metric => {
+      if (metric.metricType === 'boolean') {
+        initialValues[metric.name] = metric.baselineBoolean;
+      } else {
+        initialValues[metric.name] = metric.baseline;
+      }
+    });
+    setMetricValues(initialValues);
     setNote('');
     setScreen('idle');
-    setLastResult(null);
+  };
+
+  const updateMetricValue = (name: string, value: number | boolean) => {
+    setMetricValues(prev => ({ ...prev, [name]: value }));
   };
 
   if (screen === 'idle') {
@@ -51,14 +72,21 @@ export default function LogTab() {
               ? `Last one was ${formatDistanceToNow(lastLogTime, { addSuffix: true })}`
               : 'This will be your first one!'}
           </p>
-          {mode === 'green' && <p className="text-sm text-primary font-medium">Things are looking stable 🌿</p>}
+          {mode === 'normal' && <p className="text-sm text-primary font-medium">Things are looking stable 🌿</p>}
+          {mode === 'flare' && <p className="text-sm text-destructive font-medium">Tracking during a flare 🔥</p>}
         </div>
-        <button
-          onClick={() => setScreen('checkin')}
-          className="bg-primary text-primary-foreground rounded-2xl px-10 py-3.5 font-bold text-base hover:opacity-90 transition-opacity shadow-sm"
-        >
-          📝 Let's Go
-        </button>
+        {userMetrics.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center px-8">
+            No metrics set up yet. Complete onboarding to add metrics to track!
+          </p>
+        ) : (
+          <button
+            onClick={() => setScreen('checkin')}
+            className="bg-primary text-primary-foreground rounded-2xl px-10 py-3.5 font-bold text-base hover:opacity-90 transition-opacity shadow-sm"
+          >
+            📝 Let's Go
+          </button>
+        )}
       </div>
     );
   }
@@ -68,46 +96,71 @@ export default function LogTab() {
       <div className="animate-slide-up space-y-5 pb-4">
         <div className="bg-card rounded-2xl border p-5 shadow-sm">
           <h2 className="text-base font-bold mb-1">Quick Check-In 💬</h2>
-          <p className="text-xs text-muted-foreground mb-5">Slide each one — takes about 20 seconds!</p>
+          <p className="text-xs text-muted-foreground mb-5">
+            {userMetrics.length} metrics to track — takes about {Math.max(20, userMetrics.length * 5)} seconds!
+          </p>
           <div className="space-y-6">
-            {sliderLabels.map(({ key, label, emoji }) => (
-              <div key={key}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold">{emoji} {label}</span>
-                  <span className="text-sm font-bold text-primary bg-accent rounded-full w-8 h-8 flex items-center justify-center">{(values as any)[key]}</span>
-                </div>
-                <Slider
-                  value={[(values as any)[key]]}
-                  onValueChange={([v]) => setValues(prev => ({ ...prev, [key]: v }))}
-                  max={10}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
+            {userMetrics.map((metric) => (
+              <div key={metric.name}>
+                {metric.metricType === 'scale' ? (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{metric.name}</span>
+                      <span className="text-sm font-bold text-primary bg-accent rounded-full w-8 h-8 flex items-center justify-center">
+                        {metricValues[metric.name] ?? metric.baseline}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{metric.min}</span>
+                      <Slider
+                        value={[Number(metricValues[metric.name] ?? metric.baseline)]}
+                        onValueChange={([v]) => updateMetricValue(metric.name, v)}
+                        max={metric.max}
+                        min={metric.min}
+                        step={1}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-muted-foreground">{metric.max}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {metric.higherIsWorse ? '↑ Higher = worse' : '↑ Higher = better'} • Baseline: {metric.baseline}{metric.unit}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{metric.name}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${metric.yesIsGood ? 'text-primary' : 'text-destructive'}`}>
+                        {metric.yesIsGood ? 'Yes = good' : 'Yes = bad'}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateMetricValue(metric.name, true)}
+                        className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                          metricValues[metric.name] === true 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => updateMetricValue(metric.name, false)}
+                        className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                          metricValues[metric.name] === false 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="bg-card rounded-2xl border p-5 space-y-3 shadow-sm">
-          <h3 className="text-sm font-bold">Anything concerning? 🚩</h3>
-          <p className="text-xs text-muted-foreground">Tap if yes — this helps your care team.</p>
-          {[
-            { key: 'newSymptom', label: 'Something new or getting worse?' },
-            { key: 'unableToEat', label: 'Hard to eat or drink?' },
-            { key: 'severePain', label: 'Pain that won\'t go away?' },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFlags(prev => ({ ...prev, [key]: !(prev as any)[key] }))}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3.5 border-2 transition-all ${
-                (flags as any)[key] ? 'bg-mode-red-bg border-mode-red text-mode-red' : 'bg-secondary/50 border-transparent hover:bg-secondary'
-              }`}
-            >
-              <span className="text-sm font-semibold">{label}</span>
-              <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${(flags as any)[key] ? 'bg-mode-red text-white' : 'bg-muted text-muted-foreground'}`}>{(flags as any)[key] ? 'YES' : 'No'}</span>
-            </button>
-          ))}
         </div>
 
         <div className="bg-card rounded-2xl border p-5 shadow-sm">
@@ -131,63 +184,31 @@ export default function LogTab() {
   }
 
   // Result screen
-  const resultMode = lastResult?.mode || 'green';
   return (
     <div className="animate-slide-up flex flex-col items-center py-16 space-y-6">
-      {resultMode === 'green' && (
-        <>
-          <div className="w-24 h-24 rounded-full mode-green flex items-center justify-center">
-            <CheckCircle2 size={40} />
-          </div>
-          <div className="text-center space-y-2">
-            <p className="text-xl font-bold text-primary">Looking good! 🌟</p>
-            <p className="text-sm text-muted-foreground">Everything seems stable. Keep being awesome!</p>
-          </div>
-        </>
-      )}
-      {resultMode === 'yellow' && (
-        <>
-          <div className="w-24 h-24 rounded-full mode-yellow flex items-center justify-center">
-            <AlertTriangle size={40} />
-          </div>
-          <div className="text-center space-y-3">
-            <p className="text-xl font-bold text-mode-yellow">A few things shifted 🌤️</p>
-            <div className="bg-card rounded-xl border p-3 text-sm space-y-1 text-left">
-              {lastResult?.entry.pain > baseline.pain + 1 && <p>Pain went up: {baseline.pain} → {lastResult.entry.pain}</p>}
-              {lastResult?.entry.sleep < baseline.sleep - 1 && <p>Sleep was lower than usual</p>}
-            </div>
-            <button
-              onClick={() => { setActiveTab('routine'); resetAndNew(); }}
-              className="mode-yellow px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5 mx-auto"
-            >
-              See what to do <ArrowRight size={14} />
-            </button>
-          </div>
-        </>
-      )}
-      {resultMode === 'red' && (
-        <>
-          <div className="w-24 h-24 rounded-full mode-red flex items-center justify-center animate-pulse-soft">
-            <AlertTriangle size={40} />
-          </div>
-          <div className="text-center space-y-3">
-            <p className="text-xl font-bold text-mode-red">Let's get you some help ❤️‍🩹</p>
-            <p className="text-sm text-muted-foreground">Some things need attention. It's a good idea to reach out to your care team.</p>
-            <button
-              onClick={() => { setActiveTab('summary'); resetAndNew(); }}
-              className="mode-red px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5 mx-auto"
-            >
-              Share with care team <ArrowRight size={14} />
-            </button>
-          </div>
-        </>
-      )}
-      <button
-        onClick={resetAndNew}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-      >
-        All done 👋
-      </button>
+      <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+        <CheckCircle2 size={40} className="text-primary" />
+      </div>
+      <div className="text-center space-y-2">
+        <p className="text-xl font-bold text-primary">Check-in saved! 🌟</p>
+        <p className="text-sm text-muted-foreground">
+          Great job keeping track of how {childName} is doing.
+        </p>
+      </div>
+      <div className="flex gap-3">
+        <button
+          onClick={() => { setActiveTab('routine'); resetAndNew(); }}
+          className="bg-secondary text-foreground px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5"
+        >
+          Go to My Day <ArrowRight size={14} />
+        </button>
+        <button
+          onClick={resetAndNew}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium px-4 py-2.5"
+        >
+          Done 👋
+        </button>
+      </div>
     </div>
   );
 }
