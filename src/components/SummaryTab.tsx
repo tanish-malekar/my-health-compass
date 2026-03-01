@@ -1,136 +1,219 @@
 import { useState, useMemo } from 'react';
 import { useAppState } from '@/hooks/useAppState';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { format, subDays, isAfter } from 'date-fns';
-import { Copy, Download, FileText } from 'lucide-react';
-
-type TimeFilter = '24h' | '7d' | '30d';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+} from 'recharts';
+import { format } from 'date-fns';
+import { FileText } from 'lucide-react';
 
 export default function SummaryTab() {
-  const { logs, baseline } = useAppState();
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('7d');
+  const { logs } = useAppState();
+  const [selectedMetricName, setSelectedMetricName] = useState<string>('');
   const [showExport, setShowExport] = useState(false);
 
-  const cutoff = useMemo(() => {
-    const now = new Date();
-    if (timeFilter === '24h') return subDays(now, 1);
-    if (timeFilter === '7d') return subDays(now, 7);
-    return subDays(now, 30);
-  }, [timeFilter]);
+  // derive metrics list directly from log entries (unique names & types)
+  const metrics = useMemo(() => {
+    const map: Record<string, { metricType: 'scale' | 'boolean' }> = {};
+    logs.forEach(log => {
+      log.metrics.forEach(m => {
+        if (!map[m.name]) {
+          map[m.name] = { metricType: m.metricType };
+        }
+      });
+    });
+    return Object.entries(map).map(([name, info]) => ({ name, metricType: info.metricType }));
+  }, [logs]);
 
-  const filtered = useMemo(() => logs.filter(l => isAfter(l.timestamp, cutoff)), [logs, cutoff]);
+  const defaultMetric = metrics[0]?.name || '';
+  const activeMetricName = selectedMetricName || defaultMetric;
+  const selectedMetricType = metrics.find(m => m.name === activeMetricName)?.metricType;
 
-  const chartData = useMemo(() =>
-    filtered.map(l => ({
-      date: format(l.timestamp, timeFilter === '24h' ? 'HH:mm' : 'MMM d'),
-      Sleep: l.sleep, Pain: l.pain, Mobility: l.mobility, Intake: l.intake, Mood: l.mood,
-    })), [filtered, timeFilter]);
+  // ✅ Transform logs safely
+  const chartData = useMemo(() => {
+    if (!activeMetricName || logs.length === 0) return [];
 
-  const recentAvg = useMemo(() => {
-    if (filtered.length === 0) return null;
-    const avg = (key: 'sleep' | 'pain' | 'mobility' | 'intake' | 'mood') =>
-      Math.round(filtered.reduce((a, l) => a + l[key], 0) / filtered.length * 10) / 10;
-    return { sleep: avg('sleep'), pain: avg('pain'), mobility: avg('mobility'), intake: avg('intake'), mood: avg('mood') };
-  }, [filtered]);
+    return logs
+      .map(log => {
+        const metricValue = log.metrics.find(
+          m => m.name === activeMetricName
+        );
+        if (!metricValue) return null;
 
-  const generateClinicianSummary = () => {
-    if (!recentAvg) return '';
-    const lines = [
-      `Patient Symptom Summary — ${format(new Date(), 'MMM d, yyyy')}`,
-      `Period: ${timeFilter === '24h' ? 'Last 24 hours' : timeFilter === '7d' ? 'Last 7 days' : 'Last 30 days'}`,
-      `Entries: ${filtered.length}`, '',
-      'A. Change Snapshot',
-      `  Sleep: ${recentAvg.sleep}/10 (baseline ${baseline.sleep})  ${recentAvg.sleep < baseline.sleep - 1 ? '↓ BELOW BASELINE' : 'within range'}`,
-      `  Pain: ${recentAvg.pain}/10 (baseline ${baseline.pain})  ${recentAvg.pain > baseline.pain + 1 ? '↑ ABOVE BASELINE' : 'within range'}`,
-      `  Mobility: ${recentAvg.mobility}/10 (baseline ${baseline.mobility})  ${recentAvg.mobility < baseline.mobility - 1 ? '↓ BELOW BASELINE' : 'within range'}`,
-      `  Intake: ${recentAvg.intake}/10 (baseline ${baseline.intake})`,
-      `  Mood: ${recentAvg.mood}/10 (baseline ${baseline.mood})`, '',
-      'B. Red Flags Observed',
-      ...filtered.filter(l => l.severePain || l.newSymptom || l.unableToEat).map(l =>
-        `  ${format(l.timestamp, 'MMM d HH:mm')}: ${[l.severePain && 'Severe pain', l.newSymptom && 'New symptom', l.unableToEat && 'Unable to eat'].filter(Boolean).join(', ')}`
-      ),
-      filtered.every(l => !l.severePain && !l.newSymptom && !l.unableToEat) ? '  None observed' : '', '',
-      'C. Caregiver Questions',
-      '  - Could these changes indicate a need for medication adjustment?',
-      '  - What changes should we consider for the care plan?',
-      '  - When should we escalate to urgent care?', '',
-      'Caregiver-reported data only. No medication changes suggested.',
-    ];
-    return lines.join('\n');
+        const value =
+          metricValue.metricType === 'boolean'
+            ? (metricValue.value ? 1 : 0)
+            : (metricValue.value as number);
+
+        return {
+          date: format(new Date(log.time), 'MMM d HH:mm'),
+          timestamp: new Date(log.time).getTime(),
+          value,
+          metricType: metricValue.metricType,
+        };
+      })
+      .filter((d): d is { date: string; timestamp: number; value: number; metricType: string } => d !== null)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [logs, activeMetricName]);
+
+  // ✅ Statistics
+  const stats = useMemo(() => {
+    if (chartData.length === 0) return null;
+
+    const values = chartData.map(d => d.value as number);
+    const avg = values.reduce((a, v) => a + v, 0) / values.length;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+
+    return { avg, min, max, count: values.length };
+  }, [chartData]);
+
+  // ✅ Chart renderer
+  const renderChart = () => {
+    if (!activeMetricName || chartData.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          <p className="text-sm">No data available for {activeMetricName}</p>
+        </div>
+      );
+    }
+
+    // ✅ BOOLEAN CHART
+    if (selectedMetricType === 'boolean') {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <ScatterChart
+            data={chartData}
+            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11 }}
+              stroke="hsl(var(--muted-foreground))"
+            />
+            <YAxis
+              type="number"
+              dataKey="value"
+              domain={[0, 1]}
+              ticks={[0, 1]}
+              tick={{ fontSize: 11 }}
+              stroke="hsl(var(--muted-foreground))"
+              label={{
+                value: 'Yes / No',
+                angle: -90,
+                position: 'insideLeft',
+              }}
+            />
+            <Tooltip
+              formatter={(value: number) => (value === 1 ? 'Yes' : 'No')}
+              contentStyle={{
+                background: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '0.75rem',
+                fontSize: '12px',
+              }}
+            />
+            <Scatter dataKey="value" fill="hsl(var(--chart-1))" />
+          </ScatterChart>
+        </ResponsiveContainer>
+      );
+    }
+
+    // ✅ SCALE CHART
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={chartData}
+          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11 }}
+            stroke="hsl(var(--muted-foreground))"
+          />
+          <YAxis
+            domain={[stats?.min ?? 0, stats?.max ?? 1]}
+            tick={{ fontSize: 11 }}
+            stroke="hsl(var(--muted-foreground))"
+          />
+          <Tooltip
+            formatter={(value: number) => `${value}`}
+            contentStyle={{
+              background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '0.75rem',
+              fontSize: '12px',
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="hsl(var(--chart-1))"
+            strokeWidth={2}
+            dot={false}
+            name={activeMetricName}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    );
   };
-
-  const copyToClipboard = () => navigator.clipboard.writeText(generateClinicianSummary());
 
   return (
     <div className="animate-slide-up space-y-4 pb-4">
-      {/* Time Filter */}
-      <div className="flex gap-2 bg-secondary/50 rounded-2xl p-1.5">
-        {(['24h', '7d', '30d'] as TimeFilter[]).map(tf => (
-          <button
-            key={tf}
-            onClick={() => setTimeFilter(tf)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              timeFilter === tf ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tf === '24h' ? 'Today' : tf === '7d' ? 'This Week' : 'This Month'}
-          </button>
-        ))}
-      </div>
-
-      {/* Chart */}
-      <div className="bg-card rounded-2xl border p-4 shadow-sm">
-        <h3 className="text-sm font-bold mb-4">📊 Your Trends</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.75rem', fontSize: '12px' }} />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Line type="monotone" dataKey="Sleep" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Pain" stroke="hsl(var(--chart-5))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Mobility" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Intake" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Mood" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Insight Card */}
-      {recentAvg && (
+      {/* Metric Selection */}
+      {metrics.length > 0 && (
         <div className="bg-card rounded-2xl border p-4 shadow-sm">
-          <h3 className="text-sm font-bold mb-3">📋 Compared to Your Baseline</h3>
-          <div className="space-y-2">
-            {[
-              { label: '😴 Sleep', current: recentAvg.sleep, base: baseline.sleep, invert: false },
-              { label: '🩹 Pain', current: recentAvg.pain, base: baseline.pain, invert: true },
-              { label: '🏃 Energy', current: recentAvg.mobility, base: baseline.mobility, invert: false },
-              { label: '🥤 Intake', current: recentAvg.intake, base: baseline.intake, invert: false },
-              { label: '😊 Mood', current: recentAvg.mood, base: baseline.mood, invert: false },
-            ].map(item => {
-              const diff = item.current - item.base;
-              const concern = item.invert ? diff > 1 : diff < -1;
-              return (
-                <div key={item.label} className="flex items-center justify-between py-2 px-3 bg-secondary/30 rounded-xl">
-                  <span className="text-sm font-medium">{item.label}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">usual {item.base}</span>
-                    <span className={`text-sm font-bold ${concern ? 'text-mode-red' : 'text-primary'}`}>
-                      {item.current}
-                      {diff !== 0 && <span className="text-xs ml-1">{diff > 0 ? '↑' : '↓'}{Math.abs(Math.round(diff * 10) / 10)}</span>}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          <h3 className="text-sm font-bold mb-3">📊 Select Metric</h3>
+          <div className="flex flex-wrap gap-2">
+            {metrics.map(metric => (
+              <button
+                key={metric.name}
+                onClick={() => setSelectedMetricName(metric.name)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeMetricName === metric.name
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                }`}
+              >
+                {metric.name}
+                {metric.metricType === 'boolean' ? ' ✓' : ''}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Clinician Export */}
+      {/* Chart */}
+      <div className="bg-card rounded-2xl border p-4 shadow-sm">
+        <h3 className="text-sm font-bold mb-4">
+          📈 {activeMetricName} Trend
+        </h3>
+        <div className="h-64">{renderChart()}</div>
+      </div>
+
+      {/* Statistics */}
+      {stats && selectedMetricType === 'scale' && (
+        <div className="bg-card rounded-2xl border p-4 shadow-sm">
+          <h3 className="text-sm font-bold mb-3">📊 Statistics</h3>
+          <div className="grid grid-cols-4 gap-2">
+            <Stat label="Entries" value={stats.count} />
+            <Stat label="Avg" value={Math.round(stats.avg * 10) / 10} />
+            <Stat label="Min" value={stats.min} />
+            <Stat label="Max" value={stats.max} />
+          </div>
+        </div>
+      )}
+
+      {/* Export */}
       <div className="bg-card rounded-2xl border overflow-hidden shadow-sm">
         <button
           onClick={() => setShowExport(!showExport)}
@@ -138,29 +221,37 @@ export default function SummaryTab() {
         >
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-primary" />
-            <span className="text-sm font-bold">Share with Care Team</span>
+            <span className="text-sm font-bold">
+              Share with Care Team
+            </span>
           </div>
-          <span className="text-xs text-muted-foreground font-medium">{showExport ? 'Hide' : 'Show'}</span>
+          <span className="text-xs text-muted-foreground font-medium">
+            {showExport ? 'Hide' : 'Show'}
+          </span>
         </button>
+
         {showExport && (
           <div className="px-4 pb-4 space-y-3 border-t">
-            <pre className="text-xs bg-secondary/50 rounded-xl p-3 overflow-auto max-h-64 whitespace-pre-wrap mt-3 text-foreground/80">
-              {generateClinicianSummary()}
-            </pre>
-            <div className="flex gap-2">
-              <button onClick={copyToClipboard} className="flex-1 flex items-center justify-center gap-1.5 bg-primary text-primary-foreground rounded-xl py-3 text-sm font-bold hover:opacity-90 transition-opacity">
-                <Copy size={14} /> Copy Message
-              </button>
-              <button className="flex items-center justify-center gap-1.5 bg-secondary text-secondary-foreground rounded-xl px-4 py-3 text-sm font-bold hover:opacity-90 transition-opacity">
-                <Download size={14} />
-              </button>
-            </div>
-            <p className="text-[10px] text-muted-foreground text-center">
-              Caregiver-reported data only. No medication changes suggested.
+            <p className="text-xs text-muted-foreground">
+              Data for {activeMetricName} with {chartData.length}{' '}
+              entries
+              {stats && selectedMetricType === 'scale' && ` (avg: ${Math.round(stats.avg * 10) / 10})`}
             </p>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+
+// ✅ small reusable stat component
+function Stat({ label, value }: { label: string; value: number }) {
+
+  return (
+    <div className="bg-secondary/30 rounded-lg p-3 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-bold">{value}</p>
     </div>
   );
 }
